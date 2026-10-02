@@ -598,32 +598,43 @@
                 const amount = currentGrandTotal.toFixed(2);
                 const productinfo = "Order " + currentInvoiceNo;
 
-                // 💡 CORS সমস্যা এড়াতে GET রিকোয়েস্টের সাহায্যে PayU Hash আনা
-                const hashUrl = `${API_URL}?action=generateHash&txnid=${encodeURIComponent(txnid)}&amount=${encodeURIComponent(amount)}&productinfo=${encodeURIComponent(productinfo)}&firstname=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`;
+                // 💡 ১. GET পদ্ধতিতে চেইনিং রিকোয়েস্ট (CORS মুক্ত)
+                const getHashUrl = `${API_URL}?action=generateHash&txnid=${encodeURIComponent(txnid)}&amount=${encodeURIComponent(amount)}&productinfo=${encodeURIComponent(productinfo)}&firstname=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`;
 
-                fetch(hashUrl)
+                fetch(getHashUrl)
                 .then(res => res.json())
                 .then(res => {
-                    if (res.success && res.hash) {
-                        saveOrderToSheet("PAYU", "PENDING_PAYMENT", function() {
-                            document.getElementById('payu_key').value = storeData.payuMerchantKey;
-                            document.getElementById('payu_hash').value = res.hash;
-                            document.getElementById('payu_txnid').value = txnid;
-                            document.getElementById('payu_amount').value = amount;
-                            document.getElementById('payu_firstname').value = name;
-                            document.getElementById('payu_email').value = email;
-                            document.getElementById('payu_phone').value = phone;
-                            document.getElementById('payu_productinfo').value = productinfo;
-                            document.getElementById('payu_surl').value = window.location.href;
-                            document.getElementById('payu_furl').value = window.location.href;
-
-                            document.getElementById('payuForm').action = storeData.payuActionUrl || "https://secure.payu.in/_payment";
-                            document.getElementById('payuForm').submit();
-                        });
+                    if (res && res.success && res.hash) {
+                        executePayuRedirect(res.hash, txnid, amount, name, email, phone, productinfo);
                     } else {
-                        showAlert("Failed to generate PayU Hash!");
-                        submitBtn.disabled = false;
-                        submitBtn.innerText = "Proceed to Pay via PayU";
+                        // 💡 ২. Fallback: যদি GET না হয় তবে POST ব্যাকআপ
+                        fetch(API_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'text/plain' },
+                            body: JSON.stringify({
+                                action: "generateHash",
+                                txnid: txnid,
+                                amount: amount,
+                                productinfo: productinfo,
+                                firstname: name,
+                                email: email
+                            })
+                        })
+                        .then(r => r.json())
+                        .then(r => {
+                            if (r && r.success && r.hash) {
+                                executePayuRedirect(r.hash, txnid, amount, name, email, phone, productinfo);
+                            } else {
+                                showAlert("Failed to generate PayU Hash!");
+                                submitBtn.disabled = false;
+                                submitBtn.innerText = "Proceed to Pay via PayU";
+                            }
+                        })
+                        .catch(err => {
+                            showAlert("PayU Connection Error: " + err);
+                            submitBtn.disabled = false;
+                            submitBtn.innerText = "Proceed to Pay via PayU";
+                        });
                     }
                 })
                 .catch(err => {
@@ -648,6 +659,24 @@
                     loadData();
                 });
             }
+        }
+
+        function executePayuRedirect(hash, txnid, amount, name, email, phone, productinfo) {
+            saveOrderToSheet("PAYU", "PENDING_PAYMENT", function() {
+                document.getElementById('payu_key').value = storeData.payuMerchantKey;
+                document.getElementById('payu_hash').value = hash;
+                document.getElementById('payu_txnid').value = txnid;
+                document.getElementById('payu_amount').value = amount;
+                document.getElementById('payu_firstname').value = name;
+                document.getElementById('payu_email').value = email;
+                document.getElementById('payu_phone').value = phone;
+                document.getElementById('payu_productinfo').value = productinfo;
+                document.getElementById('payu_surl').value = window.location.href;
+                document.getElementById('payu_furl').value = window.location.href;
+
+                document.getElementById('payuForm').action = storeData.payuActionUrl || "https://secure.payu.in/_payment";
+                document.getElementById('payuForm').submit();
+            });
         }
 
         function saveOrderToSheet(paymentMode, status, callback) {
