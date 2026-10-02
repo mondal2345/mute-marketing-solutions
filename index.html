@@ -26,9 +26,10 @@
         .btn-call { border: 1.5px solid #1976d2; color: #1976d2; background: #fff; }
         .btn-whatsapp { border: 1.5px solid #2e7d32; color: #2e7d32; background: #fff; }
 
-        .search-container { padding: 15px; background: #fff; margin-top: 8px; }
+        .search-container { padding: 15px; background: #fff; margin-top: 8px; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .search-input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; outline: none; }
-        
+        .search-input:focus { border-color: #1976d2; box-shadow: 0 0 5px rgba(25, 118, 210, 0.3); }
+
         .categories-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 12px 15px; background: #fff; }
         .cat-chip { padding: 8px 18px; border-radius: 20px; border: 1px solid #ccc; background: #fff; cursor: pointer; white-space: nowrap; }
         .cat-chip.active { border-color: #d32f2f; color: #d32f2f; background: #fde8e8; font-weight: bold; }
@@ -65,7 +66,6 @@
         
         .btn-submit-order { width: 100%; padding: 12px; background: #2e7d32; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; }
 
-        /* Image Zoom Lightbox Modal */
         .zoom-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:300; justify-content:center; align-items:center; }
         .zoom-modal img { max-width: 90%; max-height: 80vh; border-radius: 8px; box-shadow: 0 4px 12px rgba(255,255,255,0.2); }
         .zoom-close { position: absolute; top: 20px; right: 25px; color: #fff; font-size: 35px; cursor: pointer; font-weight: bold; }
@@ -86,7 +86,7 @@
     </div>
 
     <div class="search-container">
-        <input type="text" id="searchInput" class="search-input" placeholder="Search item, brand, ID or HSN..." oninput="filterProducts()">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search item, brand, ID or HSN..." onkeyup="filterProducts()" oninput="filterProducts()">
     </div>
 
     <div class="categories-scroll" id="categoryContainer">
@@ -94,7 +94,7 @@
     </div>
 
     <div class="product-list" id="productList">
-        <p style="text-align: center; color: #666; margin-top: 20px;">Loading Products...</p>
+        <p style="text-align: center; color: #666; margin-top: 20px;">⌛ Loading Products, please wait...</p>
     </div>
 
     <div class="cart-bar" id="cartBar" style="display: none;">
@@ -102,7 +102,6 @@
         <button class="btn-view-cart" onclick="openCheckoutModal()">View cart</button>
     </div>
 
-    <!-- Checkout Modal -->
     <div class="modal-overlay" id="checkoutModal">
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
@@ -142,7 +141,6 @@
         </div>
     </div>
 
-    <!-- Image Zoom Modal -->
     <div class="zoom-modal" id="zoomModal" onclick="closeZoomModal()">
         <span class="zoom-close">&times;</span>
         <img id="zoomedImg" src="" alt="Zoomed Product Image">
@@ -159,10 +157,7 @@
         let userLocationUrl = "";
         let currentInvoiceNo = "";
         let currentOrderDate = "";
-
-        function generateInvoiceNumber() {
-            return "INV-" + Math.floor(1000 + Math.random() * 9000);
-        }
+        let currentGrandTotal = 0;
 
         function getFormattedDate() {
             const today = new Date();
@@ -253,25 +248,35 @@
         }
 
         function renderProducts() {
-            const search = document.getElementById('searchInput').value.toLowerCase();
+            const searchInput = document.getElementById('searchInput');
+            const search = searchInput ? searchInput.value.trim().toLowerCase() : "";
+
             const filtered = products.filter(p => {
-                const matchesCat = selectedCategory === 'All' || p.category === selectedCategory;
-                const matchesSearch = p.name.toLowerCase().includes(search) || 
-                                    p.brand.toLowerCase().includes(search) || 
-                                    p.id.toString().toLowerCase().includes(search) ||
-                                    p.hsn.toString().includes(search);
+                const matchesCat = (selectedCategory === 'All') || (String(p.category || "").toLowerCase() === selectedCategory.toLowerCase());
+                
+                const pName = String(p.name || "").toLowerCase();
+                const pBrand = String(p.brand || "").toLowerCase();
+                const pId = String(p.id || "").toLowerCase();
+                const pHsn = String(p.hsn || "").toLowerCase();
+
+                const matchesSearch = (search === "") || 
+                                      pName.includes(search) || 
+                                      pBrand.includes(search) || 
+                                      pId.includes(search) || 
+                                      pHsn.includes(search);
+
                 return matchesCat && matchesSearch;
             });
 
             if (filtered.length === 0) {
-                document.getElementById('productList').innerHTML = '<p style="text-align:center; color:#888; padding:20px;">No product found</p>';
+                document.getElementById('productList').innerHTML = '<p style="text-align:center; color:#888; padding:30px 20px;">No product found for "' + search + '"</p>';
                 return;
             }
 
             document.getElementById('productList').innerHTML = filtered.map(p => {
                 const qty = cart[p.id] || 0;
                 const isOutOfStock = p.stock <= 0;
-                const defaultImg = 'https://via.placeholder.com/70?text=No+Image';
+                const defaultImg = 'https://via.placeholder.com/75?text=No+Image';
                 const imgSrc = p.image_url ? p.image_url : defaultImg;
 
                 return `
@@ -304,7 +309,9 @@
             }).join('');
         }
 
-        function filterProducts() { renderProducts(); }
+        function filterProducts() { 
+            renderProducts(); 
+        }
 
         function updateQty(id, change) {
             const p = products.find(prod => prod.id == id);
@@ -347,7 +354,7 @@
                 return;
             }
             if (!currentInvoiceNo) {
-                currentInvoiceNo = generateInvoiceNumber();
+                currentInvoiceNo = storeData.nextInvoiceNo || ("INV-" + Math.floor(1000 + Math.random() * 9000));
                 currentOrderDate = getFormattedDate();
             }
             generateInvoicePreview();
@@ -393,6 +400,8 @@
                 text += `${i + 1}. ${p.name}\n   ID: ${p.id} | HSN: ${p.hsn || 'N/A'} | Qty: ${qty}\n   Price: ${qty} x Rs ${p.offer_price} = Rs ${itemTotal.toFixed(2)}\n`;
             });
 
+            currentGrandTotal = grandTotal;
+
             text += `-------------------------------\n`;
             text += `Base Price: Rs ${totalBaseAmount.toFixed(2)}\n`;
             text += `Total GST: Rs ${totalGstAmount.toFixed(2)}\n`;
@@ -425,7 +434,8 @@
                 qty: cart[id]
             }));
 
-            // Save order in Apps Script Orders sheet
+            const fullAddress = `${address}, Landmark: ${landmark}`;
+
             fetch(API_URL, {
                 method: 'POST',
                 mode: 'no-cors',
@@ -434,6 +444,10 @@
                     invoiceNo: currentInvoiceNo,
                     orderDate: currentOrderDate,
                     customerName: name,
+                    customerPhone: phone,
+                    customerAddress: fullAddress,
+                    gpsLocation: userLocationUrl,
+                    totalValue: currentGrandTotal.toFixed(2),
                     items: orderItems
                 })
             });
