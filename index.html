@@ -30,7 +30,7 @@
         .search-container { padding: 12px 15px; background: #fff; margin-top: 8px; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .search-wrapper { display: flex; gap: 8px; position: relative; }
         
-        .cat-dropdown { padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 13px; font-weight: bold; outline: none; background: #f9f9f9; color: #333; max-width: 120px; cursor: pointer; }
+        .cat-dropdown { padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 13px; font-weight: bold; outline: none; background: #f9f9f9; color: #333; max-width: 130px; cursor: pointer; }
         .search-input-box { flex: 1; position: relative; }
         .search-input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none; }
         .search-input:focus { border-color: #1976d2; box-shadow: 0 0 5px rgba(25, 118, 210, 0.3); }
@@ -42,8 +42,9 @@
         .suggestion-item:hover { background-color: #f0f7ff; color: #1976d2; font-weight: 600; }
         .suggestion-cat { font-size: 10px; background: #e3f2fd; color: #1976d2; padding: 2px 6px; border-radius: 4px; }
 
+        /* Dynamic Chips Bar (Category / Brand) */
         .categories-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 12px 15px; background: #fff; }
-        .cat-chip { padding: 8px 18px; border-radius: 20px; border: 1px solid #ccc; background: #fff; cursor: pointer; white-space: nowrap; }
+        .cat-chip { padding: 8px 18px; border-radius: 20px; border: 1px solid #ccc; background: #fff; cursor: pointer; white-space: nowrap; font-size: 13px; }
         .cat-chip.active { border-color: #d32f2f; color: #d32f2f; background: #fde8e8; font-weight: bold; }
 
         .product-list { padding: 10px 15px; }
@@ -78,7 +79,6 @@
         
         .btn-submit-order { width: 100%; padding: 12px; background: #2e7d32; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; }
 
-        /* Image Zoom Lightbox Modal */
         .zoom-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:300; justify-content:center; align-items:center; }
         .zoom-modal img { max-width: 90%; max-height: 80vh; border-radius: 8px; box-shadow: 0 4px 12px rgba(255,255,255,0.2); }
         .zoom-close { position: absolute; top: 20px; right: 25px; color: #fff; font-size: 35px; cursor: pointer; font-weight: bold; }
@@ -98,7 +98,7 @@
         </div>
     </div>
 
-    <!-- Search Box with Category Dropdown & Google-Style Auto Suggestions -->
+    <!-- Search Box with Category Dropdown -->
     <div class="search-container">
         <div class="search-wrapper">
             <select id="categoryDropdown" class="cat-dropdown" onchange="onDropdownCategoryChange(this.value)">
@@ -111,9 +111,9 @@
         </div>
     </div>
 
-    <!-- Category Chips Bar -->
+    <!-- Dynamic Chips Bar (Shows Categories when All is selected, Shows Brands when Category is selected) -->
     <div class="categories-scroll" id="categoryContainer">
-        <button class="cat-chip active" onclick="selectCategory('All', this)">All</button>
+        <button class="cat-chip active" onclick="selectCategoryChip('All', this)">All</button>
     </div>
 
     <div class="product-list" id="productList">
@@ -179,6 +179,7 @@
         let products = [];
         let cart = {};
         let selectedCategory = 'All';
+        let selectedBrand = 'All';
         let userLocationUrl = "";
         let currentInvoiceNo = "";
         let currentOrderDate = "";
@@ -208,7 +209,8 @@
                     document.getElementById('callBtn').href = 'tel:+' + storeData.phone;
                     document.getElementById('waBtn').href = 'https://wa.me/' + storeData.whatsapp;
 
-                    renderCategories();
+                    renderCategoriesDropdown();
+                    renderChips();
                     renderProducts();
                 })
                 .catch(err => {
@@ -258,42 +260,61 @@
             );
         }
 
-        function renderCategories() {
+        function renderCategoriesDropdown() {
             const categories = ['All', ...new Set(products.map(p => p.category))];
-            
-            // Render Category Chips
-            document.getElementById('categoryContainer').innerHTML = categories.map(cat => 
-                `<button class="cat-chip ${cat === selectedCategory ? 'active' : ''}" onclick="selectCategory('${cat}', this)">${cat}</button>`
-            ).join('');
-
-            // Render Category Dropdown
             const dropdown = document.getElementById('categoryDropdown');
             dropdown.innerHTML = categories.map(cat => 
                 `<option value="${cat}" ${cat === selectedCategory ? 'selected' : ''}>${cat === 'All' ? 'All Categories' : cat}</option>`
             ).join('');
         }
 
-        function selectCategory(cat, btn) {
+        // Render Dynamic Chips (Category or Brand depending on Dropdown)
+        function renderChips() {
+            const chipContainer = document.getElementById('categoryContainer');
+
+            if (selectedCategory === 'All') {
+                // Show Category Chips
+                const categories = ['All', ...new Set(products.map(p => p.category))];
+                chipContainer.innerHTML = categories.map(cat => 
+                    `<button class="cat-chip ${cat === selectedCategory ? 'active' : ''}" onclick="selectCategoryChip('${cat}', this)">${cat}</button>`
+                ).join('');
+            } else {
+                // Show Brand Chips for the selected category
+                const categoryProducts = products.filter(p => String(p.category || "").toLowerCase() === selectedCategory.toLowerCase());
+                const brands = ['All', ...new Set(categoryProducts.map(p => p.brand).filter(b => b && b.trim() !== ''))];
+
+                chipContainer.innerHTML = brands.map(brand => 
+                    `<button class="cat-chip ${brand === selectedBrand ? 'active' : ''}" onclick="selectBrandChip('${brand}', this)">${brand === 'All' ? 'All Brands' : brand}</button>`
+                ).join('');
+            }
+        }
+
+        function selectCategoryChip(cat, btn) {
             selectedCategory = cat;
-            document.querySelectorAll('.cat-chip').forEach(b => b.classList.remove('active'));
-            if(btn) btn.classList.add('active');
-            
-            // Sync Dropdown Value
+            selectedBrand = 'All';
+
             document.getElementById('categoryDropdown').value = cat;
             
+            renderChips();
+            closeSuggestions();
+            renderProducts();
+        }
+
+        function selectBrandChip(brand, btn) {
+            selectedBrand = brand;
+            
+            document.querySelectorAll('.cat-chip').forEach(b => b.classList.remove('active'));
+            if (btn) btn.classList.add('active');
+
             closeSuggestions();
             renderProducts();
         }
 
         function onDropdownCategoryChange(cat) {
             selectedCategory = cat;
-            
-            // Sync Category Chips UI
-            document.querySelectorAll('.cat-chip').forEach(b => {
-                if(b.innerText.trim() === cat) b.classList.add('active');
-                else b.classList.remove('active');
-            });
+            selectedBrand = 'All';
 
+            renderChips();
             closeSuggestions();
             renderProducts();
         }
@@ -308,15 +329,16 @@
                 return;
             }
 
-            // Generate Auto-Suggestions (Matching Product Name, Brand, ID)
             const matches = products.filter(p => {
                 const matchesCat = (selectedCategory === 'All') || (String(p.category || "").toLowerCase() === selectedCategory.toLowerCase());
+                const matchesBrand = (selectedBrand === 'All') || (String(p.brand || "").toLowerCase() === selectedBrand.toLowerCase());
+
                 const pName = String(p.name || "").toLowerCase();
                 const pBrand = String(p.brand || "").toLowerCase();
                 const pId = String(p.id || "").toLowerCase();
 
-                return matchesCat && (pName.includes(searchVal) || pBrand.includes(searchVal) || pId.includes(searchVal));
-            }).slice(0, 6); // Max 6 suggestions
+                return matchesCat && matchesBrand && (pName.includes(searchVal) || pBrand.includes(searchVal) || pId.includes(searchVal));
+            }).slice(0, 6);
 
             if (matches.length > 0) {
                 suggestionsBox.innerHTML = matches.map(p => `
@@ -351,7 +373,6 @@
             if (suggestionsBox) suggestionsBox.style.display = 'none';
         }
 
-        // Close suggestions on click outside
         document.addEventListener('click', function(e) {
             if (!e.target.closest('.search-input-box')) {
                 closeSuggestions();
@@ -364,7 +385,8 @@
 
             const filtered = products.filter(p => {
                 const matchesCat = (selectedCategory === 'All') || (String(p.category || "").toLowerCase() === selectedCategory.toLowerCase());
-                
+                const matchesBrand = (selectedBrand === 'All') || (String(p.brand || "").toLowerCase() === selectedBrand.toLowerCase());
+
                 const pName = String(p.name || "").toLowerCase();
                 const pBrand = String(p.brand || "").toLowerCase();
                 const pId = String(p.id || "").toLowerCase();
@@ -376,11 +398,11 @@
                                       pId.includes(search) || 
                                       pHsn.includes(search);
 
-                return matchesCat && matchesSearch;
+                return matchesCat && matchesBrand && matchesSearch;
             });
 
             if (filtered.length === 0) {
-                document.getElementById('productList').innerHTML = '<p style="text-align:center; color:#888; padding:30px 20px;">No product found for "' + search + '"</p>';
+                document.getElementById('productList').innerHTML = '<p style="text-align:center; color:#888; padding:30px 20px;">No product found.</p>';
                 return;
             }
 
