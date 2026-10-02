@@ -66,6 +66,7 @@
         
         .btn-submit-order { width: 100%; padding: 12px; background: #2e7d32; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; }
 
+        /* Image Zoom Lightbox Modal */
         .zoom-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:300; justify-content:center; align-items:center; }
         .zoom-modal img { max-width: 90%; max-height: 80vh; border-radius: 8px; box-shadow: 0 4px 12px rgba(255,255,255,0.2); }
         .zoom-close { position: absolute; top: 20px; right: 25px; color: #fff; font-size: 35px; cursor: pointer; font-weight: bold; }
@@ -102,6 +103,7 @@
         <button class="btn-view-cart" onclick="openCheckoutModal()">View cart</button>
     </div>
 
+    <!-- Checkout Modal -->
     <div class="modal-overlay" id="checkoutModal">
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
@@ -141,6 +143,7 @@
         </div>
     </div>
 
+    <!-- Image Zoom Modal -->
     <div class="zoom-modal" id="zoomModal" onclick="closeZoomModal()">
         <span class="zoom-close">&times;</span>
         <img id="zoomedImg" src="" alt="Zoomed Product Image">
@@ -353,10 +356,13 @@
                 alert(`Minimum order value is Rs ${MINIMUM_ORDER_VALUE}. Your current total is Rs ${total}.`);
                 return;
             }
+            
+            // Sequential Invoice Number (INV-0001, INV-0002...)
             if (!currentInvoiceNo) {
-                currentInvoiceNo = storeData.nextInvoiceNo || ("INV-" + Math.floor(1000 + Math.random() * 9000));
+                currentInvoiceNo = storeData.nextInvoiceNo || "INV-0001";
                 currentOrderDate = getFormattedDate();
             }
+            
             generateInvoicePreview();
             document.getElementById('checkoutModal').style.display = 'flex';
         }
