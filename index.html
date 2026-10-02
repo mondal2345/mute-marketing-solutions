@@ -535,93 +535,95 @@
         });
 
         function submitOrder() {
-            const name = document.getElementById('custName').value.trim();
-            const phone = document.getElementById('custPhone').value.trim();
-            const email = document.getElementById('custEmail').value.trim();
-            const address = document.getElementById('custAddress').value.trim();
-            const landmark = document.getElementById('custLandmark').value.trim();
-            const selectedMode = document.querySelector('input[name="paymentMode"]:checked').value;
+    const name = document.getElementById('custName').value.trim();
+    const phone = document.getElementById('custPhone').value.trim();
+    const email = document.getElementById('custEmail').value.trim();
+    const address = document.getElementById('custAddress').value.trim();
+    const landmark = document.getElementById('custLandmark').value.trim();
+    const selectedMode = document.querySelector('input[name="paymentMode"]:checked').value;
 
-            if (!name || !phone || !address || !landmark) {
-                alert('Please fill in all required fields (*).');
-                return;
-            }
+    if (!name || !phone || !address || !landmark) {
+        alert('Please fill in all required fields (*).');
+        return;
+    }
 
-            if (selectedMode === "PAYU" && !email) {
-                alert('Email address is mandatory for PayU payment gateway.');
-                return;
-            }
+    if (selectedMode === "PAYU" && !email) {
+        alert('Email address is mandatory for PayU payment gateway.');
+        return;
+    }
 
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.innerText = "Processing...";
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerText = "Processing...";
 
-            let orderItems = Object.keys(cart).map(id => ({ id: id, qty: cart[id] }));
-            const fullAddress = `${address}, Landmark: ${landmark}`;
+    let orderItems = Object.keys(cart).map(id => ({ id: id, qty: cart[id] }));
 
-            // 💡 ১. যদি PayU পেমেন্ট মোড সিলেক্ট থাকে
-            if (selectedMode === "PAYU") {
-                const txnid = "TXN_" + new Date().getTime();
-                const amount = currentGrandTotal.toFixed(2);
-                const productinfo = "Order " + currentInvoiceNo;
+    // 💡 ১. PayU পেমেন্ট মোড
+    if (selectedMode === "PAYU") {
+        const txnid = "TXN_" + new Date().getTime();
+        const amount = currentGrandTotal.toFixed(2);
+        const productinfo = "Order " + currentInvoiceNo;
 
-                // Apps Script ব্যাকএন্ড থেকে PayU Hash আনবে
-                fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: "generateHash",
-                        txnid: txnid,
-                        amount: amount,
-                        productinfo: productinfo,
-                        firstname: name,
-                        email: email
-                    })
-                })
-                .then(res => res.json())
-                .then(res => {
-                    if (res.success && res.hash) {
-                        // অর্ডারটি প্রথমে PENDING স্ট্যাটাস হিসেবে সেভ হবে
-                        saveOrderToSheet("PAYU", "PENDING_PAYMENT", function() {
-                            document.getElementById('payu_key').value = storeData.payuMerchantKey;
-                            document.getElementById('payu_hash').value = res.hash;
-                            document.getElementById('payu_txnid').value = txnid;
-                            document.getElementById('payu_amount').value = amount;
-                            document.getElementById('payu_firstname').value = name;
-                            document.getElementById('payu_email').value = email;
-                            document.getElementById('payu_phone').value = phone;
-                            document.getElementById('payu_productinfo').value = productinfo;
-                            document.getElementById('payu_surl').value = window.location.href;
-                            document.getElementById('payu_furl').value = window.location.href;
+        // PayU Hash জেনারেট করার নিরাপদ কল
+        fetch(API_URL, {
+            method: 'POST',
+            body: JSON.stringify({
+                action: "generateHash",
+                txnid: txnid,
+                amount: amount,
+                productinfo: productinfo,
+                firstname: name,
+                email: email
+            })
+        })
+        .then(res => res.json())
+        .then(res => {
+            if (res.success && res.hash) {
+                saveOrderToSheet("PAYU", "PENDING_PAYMENT", function() {
+                    document.getElementById('payu_key').value = storeData.payuMerchantKey;
+                    document.getElementById('payu_hash').value = res.hash;
+                    document.getElementById('payu_txnid').value = txnid;
+                    document.getElementById('payu_amount').value = amount;
+                    document.getElementById('payu_firstname').value = name;
+                    document.getElementById('payu_email').value = email;
+                    document.getElementById('payu_phone').value = phone;
+                    document.getElementById('payu_productinfo').value = productinfo;
+                    document.getElementById('payu_surl').value = window.location.href;
+                    document.getElementById('payu_furl').value = window.location.href;
 
-                            document.getElementById('payuForm').action = storeData.payuActionUrl || "https://secure.payu.in/_payment";
-                            document.getElementById('payuForm').submit();
-                        });
-                    } else alert("Failed to generate PayU Hash!");
-                })
-                .catch(err => {
-                    alert("PayU Processing Failed: " + err);
-                    submitBtn.disabled = false;
+                    document.getElementById('payuForm').action = storeData.payuActionUrl || "https://secure.payu.in/_payment";
+                    document.getElementById('payuForm').submit();
                 });
-
             } else {
-                // 💡 ২. যদি Cash on Delivery (COD) সিলেক্ট থাকে
-                saveOrderToSheet("COD", "COMPLETED", function() {
-                    const invoiceText = document.getElementById('invoicePreview').innerText;
-                    const encoded = encodeURIComponent(`*NEW ORDER GENERATED!*\n\n${invoiceText}`);
-                    window.open(`https://wa.me/${storeData.whatsapp || '919330672659'}?text=${encoded}`, '_blank');
-
-                    cart = {};
-                    currentInvoiceNo = "";
-                    currentOrderDate = "";
-                    submitBtn.disabled = false;
-                    updateCartBar();
-                    closeCheckoutModal();
-                    localStorage.removeItem('MUTE_PRODUCTS_CACHE');
-                    loadData();
-                });
+                alert("Failed to generate PayU Hash!");
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Proceed to Pay via PayU";
             }
-        }
+        })
+        .catch(err => {
+            alert("PayU Connection Error: " + err);
+            submitBtn.disabled = false;
+                submitBtn.innerText = "Proceed to Pay via PayU";
+        });
+
+    } else {
+        // 💡 ২. COD পেমেন্ট মোড
+        saveOrderToSheet("COD", "COMPLETED", function() {
+            const invoiceText = document.getElementById('invoicePreview').innerText;
+            const encoded = encodeURIComponent(`*NEW ORDER GENERATED!*\n\n${invoiceText}`);
+            window.open(`https://wa.me/${storeData.whatsapp || '919330672659'}?text=${encoded}`, '_blank');
+
+            cart = {};
+            currentInvoiceNo = "";
+            currentOrderDate = "";
+            submitBtn.disabled = false;
+            updateCartBar();
+            closeCheckoutModal();
+            localStorage.removeItem('MUTE_PRODUCTS_CACHE');
+            loadData();
+        });
+    }
+}
 
         function saveOrderToSheet(paymentMode, status, callback) {
             const name = document.getElementById('custName').value.trim();
