@@ -3,7 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Store Ordering App</title>
+    <title>mute - Store Ordering App</title>
+
+    <!-- Social Media / WhatsApp Share Preview Meta Tags -->
+    <meta property="og:title" content="mute - Store Ordering App" />
+    <meta property="og:description" content="Browse products and order easily via WhatsApp. Address: Maheshtala, Kolkata." />
+    <meta property="og:image" content="https://via.placeholder.com/300x300.png?text=mute+Store" />
+    <meta property="og:url" content="https://mondal2345.github.io/mute-marketing-solutions/" />
+    <meta property="og:type" content="website" />
+
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
         body { background-color: #f5f5f5; padding-bottom: 90px; }
@@ -106,6 +114,15 @@
                 <input type="text" id="custLandmark" placeholder="Nearby Landmark">
             </div>
 
+            <!-- Google Map GPS Button -->
+            <div class="form-group">
+                <label>GPS Location Pin</label>
+                <button type="button" id="geoBtn" onclick="getCurrentLocation()" style="width: 100%; padding: 10px; background: #1976d2; color: #fff; border: none; border-radius: 6px; cursor: pointer; font-weight: bold;">
+                    📍 Detect My Current Location
+                </button>
+                <small id="geoStatus" style="display: block; margin-top: 5px; color: #555; font-size: 11px;"></small>
+            </div>
+
             <label style="font-size: 13px; font-weight: bold;">Proforma Invoice Preview (Tax Inclusive):</label>
             <div class="invoice-preview" id="invoicePreview"></div>
 
@@ -121,6 +138,7 @@
         let products = [];
         let cart = {};
         let selectedCategory = 'All';
+        let userLocationUrl = "";
 
         function loadData() {
             fetch(API_URL)
@@ -145,6 +163,51 @@
                     console.error(err);
                     document.getElementById('productList').innerHTML = '<p style="text-align:center; color:red; padding:20px;">Failed to load data from API.</p>';
                 });
+        }
+
+        function getCurrentLocation() {
+            const status = document.getElementById('geoStatus');
+            const btn = document.getElementById('geoBtn');
+
+            if (!navigator.geolocation) {
+                status.innerText = "Geolocation is not supported by your browser.";
+                return;
+            }
+
+            btn.innerText = "⌛ Detecting location...";
+            status.innerText = "Please allow location access when prompted.";
+
+            navigator.geolocation.getCurrentPosition(
+                function(position) {
+                    const lat = position.coords.latitude;
+                    const lng = position.coords.longitude;
+                    userLocationUrl = `https://maps.google.com/?q=${lat},${lng}`;
+                    
+                    btn.innerText = "✅ GPS Location Saved!";
+                    btn.style.background = "#2e7d32";
+                    status.innerText = `Coordinates: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+
+                    generateInvoicePreview();
+                },
+                function(error) {
+                    btn.innerText = "📍 Detect My Current Location";
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            status.innerText = "Permission denied. Please enable location access in browser.";
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            status.innerText = "Location information unavailable.";
+                            break;
+                        case error.TIMEOUT:
+                            status.innerText = "Location request timed out.";
+                            break;
+                        default:
+                            status.innerText = "An unknown error occurred.";
+                            break;
+                    }
+                },
+                { enableHighAccuracy: true, timeout: 10000 }
+            );
         }
 
         function renderCategories() {
@@ -264,7 +327,13 @@
             const landmark = document.getElementById('custLandmark').value || '[Landmark]';
 
             let text = `===============================\n        PROFORMA INVOICE       \n===============================\n`;
-            text += `Customer: ${name}\nPhone: ${phone}\nAddress: ${address}\nLandmark: ${landmark}\n-------------------------------\nItem List (Incl. GST):\n`;
+            text += `Customer: ${name}\nPhone: ${phone}\nAddress: ${address}\nLandmark: ${landmark}\n`;
+            
+            if (userLocationUrl) {
+                text += `Google Map Pin: ${userLocationUrl}\n`;
+            }
+
+            text += `-------------------------------\nItem List (Incl. GST):\n`;
 
             let grandTotal = 0;
             let totalBaseAmount = 0;
