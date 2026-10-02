@@ -26,9 +26,21 @@
         .btn-call { border: 1.5px solid #1976d2; color: #1976d2; background: #fff; }
         .btn-whatsapp { border: 1.5px solid #2e7d32; color: #2e7d32; background: #fff; }
 
-        .search-container { padding: 15px; background: #fff; margin-top: 8px; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-        .search-input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; outline: none; }
+        /* Search & Dropdown Box Container */
+        .search-container { padding: 12px 15px; background: #fff; margin-top: 8px; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .search-wrapper { display: flex; gap: 8px; position: relative; }
+        
+        .cat-dropdown { padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 13px; font-weight: bold; outline: none; background: #f9f9f9; color: #333; max-width: 120px; cursor: pointer; }
+        .search-input-box { flex: 1; position: relative; }
+        .search-input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none; }
         .search-input:focus { border-color: #1976d2; box-shadow: 0 0 5px rgba(25, 118, 210, 0.3); }
+
+        /* Google-style Auto Suggestion List */
+        .suggestions-box { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #ccc; border-top: none; border-radius: 0 0 8px 8px; max-height: 220px; overflow-y: auto; box-shadow: 0 4px 8px rgba(0,0,0,0.1); z-index: 100; margin-top: 2px; }
+        .suggestion-item { padding: 10px 14px; cursor: pointer; font-size: 13px; color: #333; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
+        .suggestion-item:last-child { border-bottom: none; }
+        .suggestion-item:hover { background-color: #f0f7ff; color: #1976d2; font-weight: 600; }
+        .suggestion-cat { font-size: 10px; background: #e3f2fd; color: #1976d2; padding: 2px 6px; border-radius: 4px; }
 
         .categories-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 12px 15px; background: #fff; }
         .cat-chip { padding: 8px 18px; border-radius: 20px; border: 1px solid #ccc; background: #fff; cursor: pointer; white-space: nowrap; }
@@ -86,10 +98,20 @@
         </div>
     </div>
 
+    <!-- Search Box with Category Dropdown & Google-Style Auto Suggestions -->
     <div class="search-container">
-        <input type="text" id="searchInput" class="search-input" placeholder="Search item, brand, ID or HSN..." onkeyup="filterProducts()" oninput="filterProducts()">
+        <div class="search-wrapper">
+            <select id="categoryDropdown" class="cat-dropdown" onchange="onDropdownCategoryChange(this.value)">
+                <option value="All">All Categories</option>
+            </select>
+            <div class="search-input-box">
+                <input type="text" id="searchInput" class="search-input" placeholder="Search item, brand, ID or HSN..." onkeyup="handleSearchKey(event)" oninput="handleSearchInput()">
+                <div class="suggestions-box" id="suggestionsBox"></div>
+            </div>
+        </div>
     </div>
 
+    <!-- Category Chips Bar -->
     <div class="categories-scroll" id="categoryContainer">
         <button class="cat-chip active" onclick="selectCategory('All', this)">All</button>
     </div>
@@ -238,17 +260,103 @@
 
         function renderCategories() {
             const categories = ['All', ...new Set(products.map(p => p.category))];
+            
+            // Render Category Chips
             document.getElementById('categoryContainer').innerHTML = categories.map(cat => 
                 `<button class="cat-chip ${cat === selectedCategory ? 'active' : ''}" onclick="selectCategory('${cat}', this)">${cat}</button>`
+            ).join('');
+
+            // Render Category Dropdown
+            const dropdown = document.getElementById('categoryDropdown');
+            dropdown.innerHTML = categories.map(cat => 
+                `<option value="${cat}" ${cat === selectedCategory ? 'selected' : ''}>${cat === 'All' ? 'All Categories' : cat}</option>`
             ).join('');
         }
 
         function selectCategory(cat, btn) {
             selectedCategory = cat;
             document.querySelectorAll('.cat-chip').forEach(b => b.classList.remove('active'));
-            btn.classList.add('active');
+            if(btn) btn.classList.add('active');
+            
+            // Sync Dropdown Value
+            document.getElementById('categoryDropdown').value = cat;
+            
+            closeSuggestions();
             renderProducts();
         }
+
+        function onDropdownCategoryChange(cat) {
+            selectedCategory = cat;
+            
+            // Sync Category Chips UI
+            document.querySelectorAll('.cat-chip').forEach(b => {
+                if(b.innerText.trim() === cat) b.classList.add('active');
+                else b.classList.remove('active');
+            });
+
+            closeSuggestions();
+            renderProducts();
+        }
+
+        function handleSearchInput() {
+            const searchVal = document.getElementById('searchInput').value.trim().toLowerCase();
+            const suggestionsBox = document.getElementById('suggestionsBox');
+
+            if (searchVal === "") {
+                closeSuggestions();
+                renderProducts();
+                return;
+            }
+
+            // Generate Auto-Suggestions (Matching Product Name, Brand, ID)
+            const matches = products.filter(p => {
+                const matchesCat = (selectedCategory === 'All') || (String(p.category || "").toLowerCase() === selectedCategory.toLowerCase());
+                const pName = String(p.name || "").toLowerCase();
+                const pBrand = String(p.brand || "").toLowerCase();
+                const pId = String(p.id || "").toLowerCase();
+
+                return matchesCat && (pName.includes(searchVal) || pBrand.includes(searchVal) || pId.includes(searchVal));
+            }).slice(0, 6); // Max 6 suggestions
+
+            if (matches.length > 0) {
+                suggestionsBox.innerHTML = matches.map(p => `
+                    <div class="suggestion-item" onclick="selectSuggestion('${p.name.replace(/'/g, "\\'")}')">
+                        <span>🔍 ${p.name} ${p.brand ? `<small style="color:#777">(${p.brand})</small>` : ''}</span>
+                        <span class="suggestion-cat">${p.category}</span>
+                    </div>
+                `).join('');
+                suggestionsBox.style.display = 'block';
+            } else {
+                closeSuggestions();
+            }
+
+            renderProducts();
+        }
+
+        function selectSuggestion(name) {
+            document.getElementById('searchInput').value = name;
+            closeSuggestions();
+            renderProducts();
+        }
+
+        function handleSearchKey(event) {
+            if (event.key === 'Enter') {
+                closeSuggestions();
+                renderProducts();
+            }
+        }
+
+        function closeSuggestions() {
+            const suggestionsBox = document.getElementById('suggestionsBox');
+            if (suggestionsBox) suggestionsBox.style.display = 'none';
+        }
+
+        // Close suggestions on click outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.search-input-box')) {
+                closeSuggestions();
+            }
+        });
 
         function renderProducts() {
             const searchInput = document.getElementById('searchInput');
@@ -312,10 +420,6 @@
             }).join('');
         }
 
-        function filterProducts() { 
-            renderProducts(); 
-        }
-
         function updateQty(id, change) {
             const p = products.find(prod => prod.id == id);
             const currentQty = cart[id] || 0;
@@ -357,7 +461,6 @@
                 return;
             }
             
-            // Sequential Invoice Number (INV-0001, INV-0002...)
             if (!currentInvoiceNo) {
                 currentInvoiceNo = storeData.nextInvoiceNo || "INV-0001";
                 currentOrderDate = getFormattedDate();
