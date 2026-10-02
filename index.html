@@ -5,12 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>mute marketing solutions Ordering App</title>
 
-    <!-- WhatsApp & Social Media Preview Open Graph Meta Tags -->
+    <!-- Social Media Preview Meta Tags -->
     <meta property="og:title" content="mute marketing solutions Ordering App" />
     <meta property="og:description" content="Browse products and order easily via WhatsApp. Store: Maheshtala, Kolkata." />
     <meta property="og:image" content="https://mondal2345.github.io/mute-marketing-solutions/logo.png" />
     <meta property="og:image:secure_url" content="https://mondal2345.github.io/mute-marketing-solutions/logo.png" />
-    <meta property="og:image:type" content="image/png" />
     <meta property="og:url" content="https://mondal2345.github.io/mute-marketing-solutions/" />
     <meta property="og:type" content="website" />
 
@@ -19,22 +18,8 @@
         body { background-color: #f5f5f5; padding-bottom: 90px; }
 
         .store-header { background: #fff; padding: 15px; border-bottom: 1px solid #e0e0e0; }
-        
-        .store-brand { 
-            font-size: 20px; 
-            font-weight: bold; 
-            color: #d32f2f; 
-            margin-bottom: 8px; 
-            display: flex; 
-            align-items: center; 
-            gap: 10px; 
-        }
-        .store-logo { 
-            width: 36px; 
-            height: 36px; 
-            object-fit: contain; 
-            border-radius: 6px; 
-        }
+        .store-brand { font-size: 20px; font-weight: bold; color: #d32f2f; margin-bottom: 8px; display: flex; align-items: center; gap: 10px; }
+        .store-logo { width: 36px; height: 36px; object-fit: contain; border-radius: 6px; }
 
         .address-box { font-size: 13px; color: #555; margin-bottom: 15px; }
         .action-buttons { display: flex; gap: 10px; }
@@ -77,7 +62,10 @@
         .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; }
         .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
         .invoice-preview { background: #f9f9f9; border: 1px dashed #ccc; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 11px; margin-bottom: 15px; white-space: pre-wrap; line-height: 1.4; }
-        .btn-submit-order { width: 100%; padding: 12px; background: #2e7d32; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+        
+        .modal-actions { display: flex; gap: 10px; margin-top: 10px; }
+        .btn-submit-order { flex: 2; padding: 12px; background: #2e7d32; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; }
+        .btn-cancel-order { flex: 1; padding: 12px; background: #d32f2f; color: #fff; border: none; border-radius: 8px; font-size: 14px; font-weight: bold; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -146,7 +134,10 @@
             <label style="font-size: 13px; font-weight: bold;">Proforma Invoice Preview (Tax Inclusive):</label>
             <div class="invoice-preview" id="invoicePreview"></div>
 
-            <button class="btn-submit-order" onclick="submitOrder()">Send Order via WhatsApp</button>
+            <div class="modal-actions">
+                <button class="btn-submit-order" onclick="submitOrder()">Send Order via WhatsApp</button>
+                <button class="btn-cancel-order" onclick="cancelOrder()">Cancel</button>
+            </div>
         </div>
     </div>
 
@@ -159,6 +150,7 @@
         let cart = {};
         let selectedCategory = 'All';
         let userLocationUrl = "";
+        let isOrderSubmitted = false;
 
         function loadData() {
             fetch(API_URL)
@@ -211,20 +203,7 @@
                 },
                 function(error) {
                     btn.innerText = "📍 Detect My Current Location";
-                    switch(error.code) {
-                        case error.PERMISSION_DENIED:
-                            status.innerText = "Permission denied. Please enable location access in browser.";
-                            break;
-                        case error.POSITION_UNAVAILABLE:
-                            status.innerText = "Location information unavailable.";
-                            break;
-                        case error.TIMEOUT:
-                            status.innerText = "Location request timed out.";
-                            break;
-                        default:
-                            status.innerText = "An unknown error occurred.";
-                            break;
-                    }
+                    status.innerText = "Location access denied or unavailable.";
                 },
                 { enableHighAccuracy: true, timeout: 10000 }
             );
@@ -391,6 +370,24 @@
             document.getElementById(id).addEventListener('input', generateInvoicePreview);
         });
 
+        // ব্যাকএন্ডে স্টক কমানো/বাড়ানোর জন্য হেল্পার কল
+        function updateBackendInventory(isCancel) {
+            let orderItems = Object.keys(cart).map(id => ({
+                id: id,
+                qty: cart[id]
+            }));
+
+            fetch(API_URL, {
+                method: 'POST',
+                mode: 'no-cors',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    items: orderItems,
+                    cancel: isCancel
+                })
+            });
+        }
+
         function submitOrder() {
             const name = document.getElementById('custName').value.trim();
             const phone = document.getElementById('custPhone').value.trim();
@@ -402,10 +399,27 @@
                 return;
             }
 
+            // স্টক কমিয়ে দেওয়া
+            updateBackendInventory(false);
+            isOrderSubmitted = true;
+
             const invoiceText = document.getElementById('invoicePreview').innerText;
             const encoded = encodeURIComponent(`*NEW ORDER GENERATED!*\n\n${invoiceText}`);
 
             window.open(`https://wa.me/${storeData.whatsapp}?text=${encoded}`, '_blank');
+        }
+
+        function cancelOrder() {
+            if (isOrderSubmitted) {
+                // পূর্বে প্লেস করা অর্ডারের স্টক পুনঃসংযোজন করা
+                updateBackendInventory(true);
+                alert("Order canceled. Inventory restored.");
+            }
+            cart = {};
+            isOrderSubmitted = false;
+            updateCartBar();
+            renderProducts();
+            closeCheckoutModal();
         }
 
         window.onload = loadData;
