@@ -88,6 +88,7 @@
         .invoice-preview { background: #f9f9f9; border: 1px dashed #ccc; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 11px; margin-bottom: 15px; white-space: pre-wrap; line-height: 1.4; }
         
         .btn-submit-order { width: 100%; padding: 12px; background: #2e7d32; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; }
+        .btn-submit-order:disabled { background: #81c784; cursor: not-allowed; }
 
         .zoom-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:300; justify-content:center; align-items:center; }
         .zoom-modal img { max-width: 90%; max-height: 80vh; border-radius: 8px; box-shadow: 0 4px 12px rgba(255,255,255,0.2); }
@@ -121,7 +122,7 @@
         </div>
     </div>
 
-    <!-- Dynamic Chips Bar (Shows Categories when All is selected, Shows Brands when Category is selected) -->
+    <!-- Dynamic Chips Bar -->
     <div class="categories-scroll" id="categoryContainer">
         <button class="cat-chip active" onclick="selectCategoryChip('All', this)">All</button>
     </div>
@@ -171,7 +172,7 @@
             <label style="font-size: 13px; font-weight: bold;">Proforma Invoice Preview (Tax Inclusive):</label>
             <div class="invoice-preview" id="invoicePreview"></div>
 
-            <button class="btn-submit-order" onclick="submitOrder()">Send Order via WhatsApp</button>
+            <button class="btn-submit-order" id="submitBtn" onclick="submitOrder()">Send Order via WhatsApp</button>
         </div>
     </div>
 
@@ -211,13 +212,13 @@
                         document.getElementById('productList').innerHTML = '<p style="text-align:center; color:red; padding:20px;">No product data found in Google Sheet!</p>';
                         return;
                     }
-                    storeData = res.store;
-                    products = res.products;
+                    storeData = res.store || {};
+                    products = res.products || [];
 
                     document.getElementById('storeName').innerText = storeData.name || "mute marketing solutions";
-                    document.getElementById('storeAddress').innerText = storeData.address;
-                    document.getElementById('callBtn').href = 'tel:+' + storeData.phone;
-                    document.getElementById('waBtn').href = 'https://wa.me/' + storeData.whatsapp;
+                    if(storeData.address) document.getElementById('storeAddress').innerText = storeData.address;
+                    if(storeData.phone) document.getElementById('callBtn').href = 'tel:+' + storeData.phone;
+                    if(storeData.whatsapp) document.getElementById('waBtn').href = 'https://wa.me/' + storeData.whatsapp;
 
                     renderCategoriesDropdown();
                     renderChips();
@@ -271,25 +272,22 @@
         }
 
         function renderCategoriesDropdown() {
-            const categories = ['All', ...new Set(products.map(p => p.category))];
+            const categories = ['All', ...new Set(products.map(p => p.category).filter(Boolean))];
             const dropdown = document.getElementById('categoryDropdown');
             dropdown.innerHTML = categories.map(cat => 
                 `<option value="${cat}" ${cat === selectedCategory ? 'selected' : ''}>${cat === 'All' ? 'All Categories' : cat}</option>`
             ).join('');
         }
 
-        // Render Dynamic Chips (Category or Brand depending on Dropdown)
         function renderChips() {
             const chipContainer = document.getElementById('categoryContainer');
 
             if (selectedCategory === 'All') {
-                // Show Category Chips
-                const categories = ['All', ...new Set(products.map(p => p.category))];
+                const categories = ['All', ...new Set(products.map(p => p.category).filter(Boolean))];
                 chipContainer.innerHTML = categories.map(cat => 
                     `<button class="cat-chip ${cat === selectedCategory ? 'active' : ''}" onclick="selectCategoryChip('${cat}', this)">${cat}</button>`
                 ).join('');
             } else {
-                // Show Brand Chips for the selected category
                 const categoryProducts = products.filter(p => String(p.category || "").toLowerCase() === selectedCategory.toLowerCase());
                 const brands = ['All', ...new Set(categoryProducts.map(p => p.brand).filter(b => b && b.trim() !== ''))];
 
@@ -302,9 +300,7 @@
         function selectCategoryChip(cat, btn) {
             selectedCategory = cat;
             selectedBrand = 'All';
-
             document.getElementById('categoryDropdown').value = cat;
-            
             renderChips();
             closeSuggestions();
             renderProducts();
@@ -312,10 +308,8 @@
 
         function selectBrandChip(brand, btn) {
             selectedBrand = brand;
-            
             document.querySelectorAll('.cat-chip').forEach(b => b.classList.remove('active'));
             if (btn) btn.classList.add('active');
-
             closeSuggestions();
             renderProducts();
         }
@@ -323,7 +317,6 @@
         function onDropdownCategoryChange(cat) {
             selectedCategory = cat;
             selectedBrand = 'All';
-
             renderChips();
             closeSuggestions();
             renderProducts();
@@ -351,12 +344,15 @@
             }).slice(0, 6);
 
             if (matches.length > 0) {
-                suggestionsBox.innerHTML = matches.map(p => `
-                    <div class="suggestion-item" onclick="selectSuggestion('${p.name.replace(/'/g, "\\'")}')">
-                        <span>🔍 ${p.name} ${p.brand ? `<small style="color:#777">(${p.brand})</small>` : ''}</span>
-                        <span class="suggestion-cat">${p.category}</span>
-                    </div>
-                `).join('');
+                suggestionsBox.innerHTML = matches.map(p => {
+                    const safeName = p.name.replace(/"/g, '&quot;').replace(/'/g, "\\'");
+                    return `
+                        <div class="suggestion-item" onclick="selectSuggestion('${safeName}')">
+                            <span>🔍 ${p.name} ${p.brand ? `<small style="color:#777">(${p.brand})</small>` : ''}</span>
+                            <span class="suggestion-cat">${p.category}</span>
+                        </div>
+                    `;
+                }).join('');
                 suggestionsBox.style.display = 'block';
             } else {
                 closeSuggestions();
@@ -419,7 +415,7 @@
             document.getElementById('productList').innerHTML = filtered.map(p => {
                 const qty = cart[p.id] || 0;
                 const isOutOfStock = p.stock <= 0;
-                const defaultImg = 'https://via.placeholder.com/75?text=No+Image';
+                const defaultImg = 'logo.png';
                 const imgSrc = p.image_url ? p.image_url : defaultImg;
 
                 return `
@@ -473,8 +469,10 @@
             let items = 0, total = 0;
             Object.keys(cart).forEach(id => {
                 const p = products.find(prod => prod.id == id);
-                items += cart[id];
-                total += p.offer_price * cart[id];
+                if(p) {
+                    items += cart[id];
+                    total += p.offer_price * cart[id];
+                }
             });
 
             const bar = document.getElementById('cartBar');
@@ -487,9 +485,13 @@
         }
 
         function openCheckoutModal() {
-            let total = Object.keys(cart).reduce((sum, id) => sum + (products.find(p => p.id == id).offer_price * cart[id]), 0);
+            let total = Object.keys(cart).reduce((sum, id) => {
+                const p = products.find(prod => prod.id == id);
+                return sum + (p ? p.offer_price * cart[id] : 0);
+            }, 0);
+
             if (total < MINIMUM_ORDER_VALUE) {
-                alert(`Minimum order value is Rs ${MINIMUM_ORDER_VALUE}. Your current total is Rs ${total}.`);
+                alert(`Minimum order value is Rs ${MINIMUM_ORDER_VALUE}. Your current total is Rs ${total.toFixed(2)}.`);
                 return;
             }
             
@@ -505,10 +507,10 @@
         function closeCheckoutModal() { document.getElementById('checkoutModal').style.display = 'none'; }
 
         function generateInvoicePreview() {
-            const name = document.getElementById('custName').value || '[Name]';
-            const phone = document.getElementById('custPhone').value || '[Phone]';
-            const address = document.getElementById('custAddress').value || '[Address]';
-            const landmark = document.getElementById('custLandmark').value || '[Landmark]';
+            const name = document.getElementById('custName').value.trim() || '[Name]';
+            const phone = document.getElementById('custPhone').value.trim() || '[Phone]';
+            const address = document.getElementById('custAddress').value.trim() || '[Address]';
+            const landmark = document.getElementById('custLandmark').value.trim() || '[Landmark]';
 
             let text = `===============================\n        PROFORMA INVOICE       \n===============================\n`;
             text += `Invoice No: ${currentInvoiceNo}\n`;
@@ -527,18 +529,20 @@
 
             Object.keys(cart).forEach((id, i) => {
                 const p = products.find(prod => prod.id == id);
-                const qty = cart[id];
-                const itemTotal = p.offer_price * qty;
-                
-                const gstRate = p.gst || 0;
-                const basePrice = itemTotal / (1 + (gstRate / 100));
-                const gstAmt = itemTotal - basePrice;
+                if (p) {
+                    const qty = cart[id];
+                    const itemTotal = p.offer_price * qty;
+                    
+                    const gstRate = p.gst || 0;
+                    const basePrice = itemTotal / (1 + (gstRate / 100));
+                    const gstAmt = itemTotal - basePrice;
 
-                grandTotal += itemTotal;
-                totalBaseAmount += basePrice;
-                totalGstAmount += gstAmt;
+                    grandTotal += itemTotal;
+                    totalBaseAmount += basePrice;
+                    totalGstAmount += gstAmt;
 
-                text += `${i + 1}. ${p.name}\n   ID: ${p.id} | HSN: ${p.hsn || 'N/A'} | Qty: ${qty}\n   Price: ${qty} x Rs ${p.offer_price} = Rs ${itemTotal.toFixed(2)}\n`;
+                    text += `${i + 1}. ${p.name}\n   ID: ${p.id} | HSN: ${p.hsn || 'N/A'} | Qty: ${qty}\n   Price: ${qty} x Rs ${p.offer_price} = Rs ${itemTotal.toFixed(2)}\n`;
+                }
             });
 
             currentGrandTotal = grandTotal;
@@ -570,6 +574,10 @@
                 return;
             }
 
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Processing Order...";
+
             let orderItems = Object.keys(cart).map(id => ({
                 id: id,
                 qty: cart[id]
@@ -577,6 +585,7 @@
 
             const fullAddress = `${address}, Landmark: ${landmark}`;
 
+            // 💡 গুগল শিটে ব্যাকএন্ডে অর্ডার পাঠানোর ডাটা
             fetch(API_URL, {
                 method: 'POST',
                 mode: 'no-cors',
@@ -591,18 +600,26 @@
                     totalValue: currentGrandTotal.toFixed(2),
                     items: orderItems
                 })
+            }).then(() => {
+                // হোয়াটসঅ্যাপে পাঠাবো
+                const invoiceText = document.getElementById('invoicePreview').innerText;
+                const encoded = encodeURIComponent(`*NEW ORDER GENERATED!*\n\n${invoiceText}`);
+                window.open(`https://wa.me/${storeData.whatsapp || '919330672659'}?text=${encoded}`, '_blank');
+
+                // ফর্ম রিসেট
+                cart = {};
+                currentInvoiceNo = "";
+                currentOrderDate = "";
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Send Order via WhatsApp";
+                updateCartBar();
+                closeCheckoutModal();
+                loadData(); // ব্যাকএন্ড স্টক রিলোড
+            }).catch(err => {
+                alert("Order processing failed! Please try again.");
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Send Order via WhatsApp";
             });
-
-            const invoiceText = document.getElementById('invoicePreview').innerText;
-            const encoded = encodeURIComponent(`*NEW ORDER GENERATED!*\n\n${invoiceText}`);
-
-            window.open(`https://wa.me/${storeData.whatsapp}?text=${encoded}`, '_blank');
-            
-            cart = {};
-            currentInvoiceNo = "";
-            currentOrderDate = "";
-            updateCartBar();
-            closeCheckoutModal();
         }
 
         window.onload = loadData;
