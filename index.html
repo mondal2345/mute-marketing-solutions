@@ -73,7 +73,6 @@
         .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; }
         .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
         
-        /* Payment Mode Selector Styling */
         .payment-options-box { background: #f0f7ff; padding: 12px; border-radius: 8px; border: 1px solid #b3d7ff; margin-bottom: 15px; }
         .payment-option-item { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 6px; }
         .payment-option-item:last-child { margin-bottom: 0; }
@@ -85,6 +84,17 @@
         .zoom-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:300; justify-content:center; align-items:center; }
         .zoom-modal img { max-width: 90%; max-height: 80vh; border-radius: 8px; }
         .zoom-close { position: absolute; top: 20px; right: 25px; color: #fff; font-size: 35px; cursor: pointer; }
+
+        /* Custom Alert Dialog Styling */
+        .custom-alert-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+        .custom-alert-box { background: #fff; width: 85%; max-width: 380px; border-radius: 12px; padding: 20px; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.2); animation: fadeIn 0.2s ease-in-out; }
+        .custom-alert-header { display: flex; align-items: center; justify-content: center; gap: 8px; margin-bottom: 12px; }
+        .custom-alert-logo { width: 28px; height: 28px; object-fit: contain; border-radius: 4px; }
+        .custom-alert-title { font-size: 16px; font-weight: bold; color: #d32f2f; }
+        .custom-alert-msg { font-size: 14px; color: #333; margin-bottom: 18px; line-height: 1.4; }
+        .custom-alert-btn { background: #1976d2; color: #fff; border: none; padding: 10px 24px; border-radius: 6px; font-size: 14px; font-weight: bold; cursor: pointer; width: 100%; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.95); } to { opacity: 1; transform: scale(1); } }
     </style>
 </head>
 <body>
@@ -163,7 +173,6 @@
                 <small id="geoStatus" style="display: block; margin-top: 5px; color: #555; font-size: 11px;"></small>
             </div>
 
-            <!-- 💡 Payment Mode Selection Area -->
             <label style="font-size: 13px; font-weight: bold; margin-bottom: 5px; display: block;">Select Payment Option:</label>
             <div class="payment-options-box">
                 <label class="payment-option-item">
@@ -202,6 +211,18 @@
         <img id="zoomedImg" src="" alt="Zoomed Image">
     </div>
 
+    <!-- Custom Alert Pop-Up Box -->
+    <div class="custom-alert-overlay" id="customAlertOverlay">
+        <div class="custom-alert-box">
+            <div class="custom-alert-header">
+                <img src="logo.png" alt="Logo" class="custom-alert-logo" onerror="this.onerror=null; this.src='logo.jpg';">
+                <span class="custom-alert-title">mute marketing solutions</span>
+            </div>
+            <div class="custom-alert-msg" id="customAlertMsg">Notification Message</div>
+            <button class="custom-alert-btn" onclick="closeCustomAlert()">OK</button>
+        </div>
+    </div>
+
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbzACl2swrFTEQAD4vgWW6pUQWQXpp-TPaaDiRTOc8Zi0yWQmeYuGmINoKhGJVj7ApzPkg/exec"; 
         
@@ -215,6 +236,15 @@
         let currentInvoiceNo = "";
         let currentOrderDate = "";
         let currentGrandTotal = 0;
+
+        function showAlert(msg) {
+            document.getElementById('customAlertMsg').innerText = msg;
+            document.getElementById('customAlertOverlay').style.display = 'flex';
+        }
+
+        function closeCustomAlert() {
+            document.getElementById('customAlertOverlay').style.display = 'none';
+        }
 
         function getFormattedDate() {
             const today = new Date();
@@ -439,7 +469,7 @@
             const p = products.find(prod => prod.id == id);
             const currentQty = cart[id] || 0;
             const newQty = currentQty + change;
-            if (newQty > p.stock) { alert(`Only ${p.stock} items available.`); return; }
+            if (newQty > p.stock) { showAlert(`Only ${p.stock} items available in stock.`); return; }
             if (newQty <= 0) delete cart[id];
             else cart[id] = newQty;
 
@@ -468,7 +498,7 @@
             }, 0);
 
             if (total < MINIMUM_ORDER_VALUE) {
-                alert(`Minimum order value is Rs ${MINIMUM_ORDER_VALUE}. Your current total is Rs ${total.toFixed(2)}.`);
+                showAlert(`Minimum order value is Rs ${MINIMUM_ORDER_VALUE}. Your current total is Rs ${total.toFixed(2)}.`);
                 return;
             }
             if (!currentInvoiceNo) {
@@ -519,7 +549,6 @@
 
             document.getElementById('invoicePreview').innerText = text;
 
-            // বাটনের টেক্সট পরিবর্তন
             const submitBtn = document.getElementById('submitBtn');
             if (selectedMode === 'PAYU') {
                 submitBtn.innerText = "Proceed to Pay via PayU";
@@ -535,95 +564,94 @@
         });
 
         function submitOrder() {
-    const name = document.getElementById('custName').value.trim();
-    const phone = document.getElementById('custPhone').value.trim();
-    const email = document.getElementById('custEmail').value.trim();
-    const address = document.getElementById('custAddress').value.trim();
-    const landmark = document.getElementById('custLandmark').value.trim();
-    const selectedMode = document.querySelector('input[name="paymentMode"]:checked').value;
+            const name = document.getElementById('custName').value.trim();
+            const phone = document.getElementById('custPhone').value.trim();
+            const email = document.getElementById('custEmail').value.trim();
+            const address = document.getElementById('custAddress').value.trim();
+            const landmark = document.getElementById('custLandmark').value.trim();
+            const selectedMode = document.querySelector('input[name="paymentMode"]:checked').value;
 
-    if (!name || !phone || !address || !landmark) {
-        alert('Please fill in all required fields (*).');
-        return;
-    }
-
-    if (selectedMode === "PAYU" && !email) {
-        alert('Email address is mandatory for PayU payment gateway.');
-        return;
-    }
-
-    const submitBtn = document.getElementById('submitBtn');
-    submitBtn.disabled = true;
-    submitBtn.innerText = "Processing...";
-
-    let orderItems = Object.keys(cart).map(id => ({ id: id, qty: cart[id] }));
-
-    // 💡 ১. PayU পেমেন্ট মোড
-    if (selectedMode === "PAYU") {
-        const txnid = "TXN_" + new Date().getTime();
-        const amount = currentGrandTotal.toFixed(2);
-        const productinfo = "Order " + currentInvoiceNo;
-
-        // PayU Hash জেনারেট করার নিরাপদ কল
-        fetch(API_URL, {
-            method: 'POST',
-            body: JSON.stringify({
-                action: "generateHash",
-                txnid: txnid,
-                amount: amount,
-                productinfo: productinfo,
-                firstname: name,
-                email: email
-            })
-        })
-        .then(res => res.json())
-        .then(res => {
-            if (res.success && res.hash) {
-                saveOrderToSheet("PAYU", "PENDING_PAYMENT", function() {
-                    document.getElementById('payu_key').value = storeData.payuMerchantKey;
-                    document.getElementById('payu_hash').value = res.hash;
-                    document.getElementById('payu_txnid').value = txnid;
-                    document.getElementById('payu_amount').value = amount;
-                    document.getElementById('payu_firstname').value = name;
-                    document.getElementById('payu_email').value = email;
-                    document.getElementById('payu_phone').value = phone;
-                    document.getElementById('payu_productinfo').value = productinfo;
-                    document.getElementById('payu_surl').value = window.location.href;
-                    document.getElementById('payu_furl').value = window.location.href;
-
-                    document.getElementById('payuForm').action = storeData.payuActionUrl || "https://secure.payu.in/_payment";
-                    document.getElementById('payuForm').submit();
-                });
-            } else {
-                alert("Failed to generate PayU Hash!");
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Proceed to Pay via PayU";
+            if (!name || !phone || !address || !landmark) {
+                showAlert('Please fill in all required fields (*).');
+                return;
             }
-        })
-        .catch(err => {
-            alert("PayU Connection Error: " + err);
-            submitBtn.disabled = false;
-                submitBtn.innerText = "Proceed to Pay via PayU";
-        });
 
-    } else {
-        // 💡 ২. COD পেমেন্ট মোড
-        saveOrderToSheet("COD", "COMPLETED", function() {
-            const invoiceText = document.getElementById('invoicePreview').innerText;
-            const encoded = encodeURIComponent(`*NEW ORDER GENERATED!*\n\n${invoiceText}`);
-            window.open(`https://wa.me/${storeData.whatsapp || '919330672659'}?text=${encoded}`, '_blank');
+            if (selectedMode === "PAYU" && !email) {
+                showAlert('Email address is mandatory for PayU payment gateway.');
+                return;
+            }
 
-            cart = {};
-            currentInvoiceNo = "";
-            currentOrderDate = "";
-            submitBtn.disabled = false;
-            updateCartBar();
-            closeCheckoutModal();
-            localStorage.removeItem('MUTE_PRODUCTS_CACHE');
-            loadData();
-        });
-    }
-}
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Processing...";
+
+            let orderItems = Object.keys(cart).map(id => ({ id: id, qty: cart[id] }));
+            const fullAddress = `${address}, Landmark: ${landmark}`;
+
+            if (selectedMode === "PAYU") {
+                const txnid = "TXN_" + new Date().getTime();
+                const amount = currentGrandTotal.toFixed(2);
+                const productinfo = "Order " + currentInvoiceNo;
+
+                fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: "generateHash",
+                        txnid: txnid,
+                        amount: amount,
+                        productinfo: productinfo,
+                        firstname: name,
+                        email: email
+                    })
+                })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.success && res.hash) {
+                        saveOrderToSheet("PAYU", "PENDING_PAYMENT", function() {
+                            document.getElementById('payu_key').value = storeData.payuMerchantKey;
+                            document.getElementById('payu_hash').value = res.hash;
+                            document.getElementById('payu_txnid').value = txnid;
+                            document.getElementById('payu_amount').value = amount;
+                            document.getElementById('payu_firstname').value = name;
+                            document.getElementById('payu_email').value = email;
+                            document.getElementById('payu_phone').value = phone;
+                            document.getElementById('payu_productinfo').value = productinfo;
+                            document.getElementById('payu_surl').value = window.location.href;
+                            document.getElementById('payu_furl').value = window.location.href;
+
+                            document.getElementById('payuForm').action = storeData.payuActionUrl || "https://secure.payu.in/_payment";
+                            document.getElementById('payuForm').submit();
+                        });
+                    } else {
+                        showAlert("Failed to generate PayU Hash!");
+                        submitBtn.disabled = false;
+                        submitBtn.innerText = "Proceed to Pay via PayU";
+                    }
+                })
+                .catch(err => {
+                    showAlert("PayU Connection Error: " + err);
+                    submitBtn.disabled = false;
+                    submitBtn.innerText = "Proceed to Pay via PayU";
+                });
+
+            } else {
+                saveOrderToSheet("COD", "COMPLETED", function() {
+                    const invoiceText = document.getElementById('invoicePreview').innerText;
+                    const encoded = encodeURIComponent(`*NEW ORDER GENERATED!*\n\n${invoiceText}`);
+                    window.open(`https://wa.me/${storeData.whatsapp || '919330672659'}?text=${encoded}`, '_blank');
+
+                    cart = {};
+                    currentInvoiceNo = "";
+                    currentOrderDate = "";
+                    submitBtn.disabled = false;
+                    updateCartBar();
+                    closeCheckoutModal();
+                    localStorage.removeItem('MUTE_PRODUCTS_CACHE');
+                    loadData();
+                });
+            }
+        }
 
         function saveOrderToSheet(paymentMode, status, callback) {
             const name = document.getElementById('custName').value.trim();
