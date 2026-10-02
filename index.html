@@ -38,6 +38,7 @@
         .product-card { background: #fff; border-radius: 10px; padding: 12px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .product-img { width: 70px; height: 70px; object-fit: cover; border-radius: 8px; background: #eee; flex-shrink: 0; }
         .product-info { flex: 1; }
+        .product-id { font-size: 11px; font-weight: bold; color: #777; margin-bottom: 2px; }
         .product-brand { font-size: 11px; font-weight: bold; color: #1976d2; text-transform: uppercase; margin-bottom: 2px; }
         .product-title { font-size: 14px; font-weight: 600; color: #222; margin-bottom: 4px; }
         
@@ -83,7 +84,7 @@
     </div>
 
     <div class="search-container">
-        <input type="text" id="searchInput" class="search-input" placeholder="Search item, brand or HSN..." oninput="filterProducts()">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search item, brand, ID or HSN..." oninput="filterProducts()">
     </div>
 
     <div class="categories-scroll" id="categoryContainer">
@@ -227,7 +228,10 @@
             const search = document.getElementById('searchInput').value.toLowerCase();
             const filtered = products.filter(p => {
                 const matchesCat = selectedCategory === 'All' || p.category === selectedCategory;
-                const matchesSearch = p.name.toLowerCase().includes(search) || p.brand.toLowerCase().includes(search) || p.hsn.toString().includes(search);
+                const matchesSearch = p.name.toLowerCase().includes(search) || 
+                                    p.brand.toLowerCase().includes(search) || 
+                                    p.id.toString().toLowerCase().includes(search) ||
+                                    p.hsn.toString().includes(search);
                 return matchesCat && matchesSearch;
             });
 
@@ -246,6 +250,7 @@
                     <div class="product-card">
                         <img src="${imgSrc}" class="product-img" onerror="this.src='${defaultImg}'">
                         <div class="product-info">
+                            <div class="product-id">ID: ${p.id}</div>
                             ${p.brand ? `<div class="product-brand">${p.brand}</div>` : ''}
                             <div class="product-title">${p.name}</div>
                             <div class="price-box">
@@ -351,7 +356,7 @@
                 totalBaseAmount += basePrice;
                 totalGstAmount += gstAmt;
 
-                text += `${i + 1}. ${p.name}\n   HSN: ${p.hsn || 'N/A'} | Qty: ${qty}\n   Price: ${qty} x Rs ${p.offer_price} = Rs ${itemTotal.toFixed(2)}\n`;
+                text += `${i + 1}. ${p.name}\n   ID: ${p.id} | HSN: ${p.hsn || 'N/A'} | Qty: ${qty}\n   Price: ${qty} x Rs ${p.offer_price} = Rs ${itemTotal.toFixed(2)}\n`;
             });
 
             text += `-------------------------------\n`;
@@ -370,7 +375,6 @@
             document.getElementById(id).addEventListener('input', generateInvoicePreview);
         });
 
-        // ব্যাকএন্ডে স্টক কমানো/বাড়ানোর জন্য হেল্পার কল
         function updateBackendInventory(isCancel) {
             let orderItems = Object.keys(cart).map(id => ({
                 id: id,
@@ -399,7 +403,6 @@
                 return;
             }
 
-            // স্টক কমিয়ে দেওয়া
             updateBackendInventory(false);
             isOrderSubmitted = true;
 
@@ -411,7 +414,6 @@
 
         function cancelOrder() {
             if (isOrderSubmitted) {
-                // পূর্বে প্লেস করা অর্ডারের স্টক পুনঃসংযোজন করা
                 updateBackendInventory(true);
                 alert("Order canceled. Inventory restored.");
             }
