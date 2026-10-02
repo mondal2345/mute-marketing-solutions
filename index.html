@@ -266,13 +266,11 @@
         }
 
         function loadData() {
-            // ১. ইন্সট্যান্ট স্ক্রিন রেন্ডারের জন্য সেভ হওয়া ক্যাশ
             const localCached = localStorage.getItem('MUTE_PRODUCTS_CACHE');
             if (localCached) {
                 try { applyDataToUI(JSON.parse(localCached)); } catch(e) { console.error(e); }
             }
 
-            // 💡 গুগল শিট থেকে লাইভ টাটকা ইনভেন্টরি ফেচ করার প্যারামিটার যুক্ত করা হয়েছে
             const freshApiUrl = API_URL + "?nocache=true&_t=" + new Date().getTime();
 
             fetch(freshApiUrl)
@@ -387,7 +385,7 @@
 
             if (matches.length > 0) {
                 suggestionsBox.innerHTML = matches.map(p => {
-                    const safeName = p.name.replace(/"/g, '&quot;').replace(/'/g, "\\'");
+                    const safeName = (p.name || "").replace(/"/g, '&quot;').replace(/'/g, "\\'");
                     return `<div class="suggestion-item" onclick="selectSuggestion('${safeName}')">
                         <span>🔍 ${p.name} ${p.brand ? `<small style="color:#777">(${p.brand})</small>` : ''}</span>
                         <span class="suggestion-cat">${p.category}</span>
@@ -448,8 +446,8 @@
                             ${p.mrp > p.offer_price ? `<span class="mrp-price">Rs ${p.mrp}</span>` : ''}
                             ${p.discount ? `<span class="discount-badge">${p.discount}</span>` : ''}
                         </div>
-                        <span class="gst-text">(Incl. ${p.gst}% GST | HSN: ${p.hsn || 'N/A'})</span>
-                        <span class="product-unit">${p.unit}</span>
+                        <span class="gst-text">(Incl. ${p.gst || 0}% GST | HSN: ${p.hsn || 'N/A'})</span>
+                        <span class="product-unit">${p.unit || ''}</span>
                         ${isOutOfStock ? '<div class="out-of-stock">Out of Stock</div>' : ''}
                     </div>
                     <div>
@@ -467,6 +465,7 @@
 
         function updateQty(id, change) {
             const p = products.find(prod => prod.id == id);
+            if (!p) return;
             const currentQty = cart[id] || 0;
             const newQty = currentQty + change;
             if (newQty > p.stock) { showAlert(`Only ${p.stock} items available in stock.`); return; }
@@ -560,7 +559,8 @@
         }
 
         ['custName', 'custPhone', 'custEmail', 'custAddress', 'custLandmark'].forEach(id => {
-            document.getElementById(id).addEventListener('input', generateInvoicePreview);
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', generateInvoicePreview);
         });
 
         function submitOrder() {
@@ -576,8 +576,13 @@
                 return;
             }
 
-            if (selectedMode === "PAYU" && !email) {
-                showAlert('Email address is mandatory for PayU payment gateway.');
+            if (phone.length < 10) {
+                showAlert('Please enter a valid 10-digit WhatsApp number.');
+                return;
+            }
+
+            if (selectedMode === "PAYU" && (!email || !email.includes('@'))) {
+                showAlert('A valid Email address is mandatory for PayU payment gateway.');
                 return;
             }
 
@@ -593,18 +598,10 @@
                 const amount = currentGrandTotal.toFixed(2);
                 const productinfo = "Order " + currentInvoiceNo;
 
-                fetch(API_URL, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        action: "generateHash",
-                        txnid: txnid,
-                        amount: amount,
-                        productinfo: productinfo,
-                        firstname: name,
-                        email: email
-                    })
-                })
+                // 💡 CORS সমস্যা এড়াতে GET রিকোয়েস্টের সাহায্যে PayU Hash আনা
+                const hashUrl = `${API_URL}?action=generateHash&txnid=${encodeURIComponent(txnid)}&amount=${encodeURIComponent(amount)}&productinfo=${encodeURIComponent(productinfo)}&firstname=${encodeURIComponent(name)}&email=${encodeURIComponent(email)}`;
+
+                fetch(hashUrl)
                 .then(res => res.json())
                 .then(res => {
                     if (res.success && res.hash) {
@@ -677,7 +674,10 @@
                     paymentMode: paymentMode,
                     status: status
                 })
-            }).then(() => { if (callback) callback(); });
+            }).then(() => { if (callback) callback(); }).catch(err => {
+                console.error("Sheet Error:", err);
+                if (callback) callback();
+            });
         }
 
         window.onload = loadData;
