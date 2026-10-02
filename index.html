@@ -5,22 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mute Marketing Solutions - Ordering App</title>
 
-    <!-- PWA Web App Manifest -->
     <link rel="manifest" href="manifest.json">
-
-    <!-- Favicon & Apple Icons Configuration -->
     <link rel="icon" type="image/png" sizes="32x32" href="logo.png">
     <link rel="icon" type="image/png" sizes="16x16" href="logo.png">
     <link rel="apple-touch-icon" sizes="180x180" href="logo.png">
     <link rel="shortcut icon" href="logo.png" type="image/x-icon">
 
-    <!-- Social Media Preview Meta Tags -->
     <meta property="og:title" content="Mute Marketing Solutions Ordering App" />
-    <meta property="og:description" content="Browse products and order easily via WhatsApp. Store: Maheshtala, Kolkata." />
+    <meta property="og:description" content="Browse products and order easily. Store: Maheshtala, Kolkata." />
     <meta property="og:image" content="https://mondal2345.github.io/mute-marketing-solutions/logo.png" />
-    <meta property="og:image:secure_url" content="https://mondal2345.github.io/mute-marketing-solutions/logo.png" />
     <meta property="og:url" content="https://mondal2345.github.io/mute-marketing-solutions/" />
-    <meta property="og:type" content="website" />
 
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
@@ -36,23 +30,16 @@
         .btn-call { border: 1.5px solid #1976d2; color: #1976d2; background: #fff; }
         .btn-whatsapp { border: 1.5px solid #2e7d32; color: #2e7d32; background: #fff; }
 
-        /* Search & Dropdown Box Container */
         .search-container { padding: 12px 15px; background: #fff; margin-top: 8px; position: sticky; top: 0; z-index: 50; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
         .search-wrapper { display: flex; gap: 8px; position: relative; }
-        
         .cat-dropdown { padding: 10px; border: 1px solid #ccc; border-radius: 8px; font-size: 13px; font-weight: bold; outline: none; background: #f9f9f9; color: #333; max-width: 130px; cursor: pointer; }
         .search-input-box { flex: 1; position: relative; }
         .search-input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 14px; outline: none; }
-        .search-input:focus { border-color: #1976d2; box-shadow: 0 0 5px rgba(25, 118, 210, 0.3); }
 
-        /* Google-style Auto Suggestion List */
         .suggestions-box { display: none; position: absolute; top: 100%; left: 0; right: 0; background: #fff; border: 1px solid #ccc; border-top: none; border-radius: 0 0 8px 8px; max-height: 220px; overflow-y: auto; box-shadow: 0 4px 8px rgba(0,0,0,0.1); z-index: 100; margin-top: 2px; }
         .suggestion-item { padding: 10px 14px; cursor: pointer; font-size: 13px; color: #333; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-        .suggestion-item:last-child { border-bottom: none; }
-        .suggestion-item:hover { background-color: #f0f7ff; color: #1976d2; font-weight: 600; }
         .suggestion-cat { font-size: 10px; background: #e3f2fd; color: #1976d2; padding: 2px 6px; border-radius: 4px; }
 
-        /* Dynamic Chips Bar (Category / Brand) */
         .categories-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 12px 15px; background: #fff; }
         .cat-chip { padding: 8px 18px; border-radius: 20px; border: 1px solid #ccc; background: #fff; cursor: pointer; white-space: nowrap; font-size: 13px; }
         .cat-chip.active { border-color: #d32f2f; color: #d32f2f; background: #fde8e8; font-weight: bold; }
@@ -85,14 +72,19 @@
         .form-group { margin-bottom: 12px; }
         .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; }
         .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
-        .invoice-preview { background: #f9f9f9; border: 1px dashed #ccc; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 11px; margin-bottom: 15px; white-space: pre-wrap; line-height: 1.4; }
         
+        /* Payment Mode Selector Styling */
+        .payment-options-box { background: #f0f7ff; padding: 12px; border-radius: 8px; border: 1px solid #b3d7ff; margin-bottom: 15px; }
+        .payment-option-item { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 6px; }
+        .payment-option-item:last-child { margin-bottom: 0; }
+
+        .invoice-preview { background: #f9f9f9; border: 1px dashed #ccc; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 11px; margin-bottom: 15px; white-space: pre-wrap; line-height: 1.4; }
         .btn-submit-order { width: 100%; padding: 12px; background: #2e7d32; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; }
         .btn-submit-order:disabled { background: #81c784; cursor: not-allowed; }
 
         .zoom-modal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.85); z-index:300; justify-content:center; align-items:center; }
-        .zoom-modal img { max-width: 90%; max-height: 80vh; border-radius: 8px; box-shadow: 0 4px 12px rgba(255,255,255,0.2); }
-        .zoom-close { position: absolute; top: 20px; right: 25px; color: #fff; font-size: 35px; cursor: pointer; font-weight: bold; }
+        .zoom-modal img { max-width: 90%; max-height: 80vh; border-radius: 8px; }
+        .zoom-close { position: absolute; top: 20px; right: 25px; color: #fff; font-size: 35px; cursor: pointer; }
     </style>
 </head>
 <body>
@@ -109,7 +101,6 @@
         </div>
     </div>
 
-    <!-- Search Box with Category Dropdown -->
     <div class="search-container">
         <div class="search-wrapper">
             <select id="categoryDropdown" class="cat-dropdown" onchange="onDropdownCategoryChange(this.value)">
@@ -122,7 +113,6 @@
         </div>
     </div>
 
-    <!-- Dynamic Chips Bar -->
     <div class="categories-scroll" id="categoryContainer">
         <button class="cat-chip active" onclick="selectCategoryChip('All', this)">All</button>
     </div>
@@ -153,6 +143,10 @@
                 <input type="tel" id="custPhone" placeholder="10 Digit Phone Number">
             </div>
             <div class="form-group">
+                <label>Email Address (Required for PayU)*</label>
+                <input type="email" id="custEmail" placeholder="yourname@gmail.com">
+            </div>
+            <div class="form-group">
                 <label>Full Address*</label>
                 <textarea id="custAddress" rows="2" placeholder="House No, Street, Area"></textarea>
             </div>
@@ -169,17 +163,43 @@
                 <small id="geoStatus" style="display: block; margin-top: 5px; color: #555; font-size: 11px;"></small>
             </div>
 
+            <!-- 💡 Payment Mode Selection Area -->
+            <label style="font-size: 13px; font-weight: bold; margin-bottom: 5px; display: block;">Select Payment Option:</label>
+            <div class="payment-options-box">
+                <label class="payment-option-item">
+                    <input type="radio" name="paymentMode" value="COD" checked onchange="generateInvoicePreview()">
+                    <span>💵 Cash on Delivery (COD)</span>
+                </label>
+                <label class="payment-option-item">
+                    <input type="radio" name="paymentMode" value="PAYU" onchange="generateInvoicePreview()">
+                    <span>💳 Pay Online (UPI / Card / NetBanking via PayU)</span>
+                </label>
+            </div>
+
             <label style="font-size: 13px; font-weight: bold;">Proforma Invoice Preview (Tax Inclusive):</label>
             <div class="invoice-preview" id="invoicePreview"></div>
 
-            <button class="btn-submit-order" id="submitBtn" onclick="submitOrder()">Send Order via WhatsApp</button>
+            <button class="btn-submit-order" id="submitBtn" onclick="submitOrder()">Place Order via WhatsApp</button>
         </div>
     </div>
 
-    <!-- Image Zoom Modal -->
+    <!-- Hidden Form for PayU Redirect -->
+    <form id="payuForm" method="post" action="">
+        <input type="hidden" name="key" id="payu_key" value="" />
+        <input type="hidden" name="hash" id="payu_hash" value="" />
+        <input type="hidden" name="txnid" id="payu_txnid" value="" />
+        <input type="hidden" name="amount" id="payu_amount" value="" />
+        <input type="hidden" name="firstname" id="payu_firstname" value="" />
+        <input type="hidden" name="email" id="payu_email" value="" />
+        <input type="hidden" name="phone" id="payu_phone" value="" />
+        <input type="hidden" name="productinfo" id="payu_productinfo" value="" />
+        <input type="hidden" name="surl" id="payu_surl" value="" />
+        <input type="hidden" name="furl" id="payu_furl" value="" />
+    </form>
+
     <div class="zoom-modal" id="zoomModal" onclick="closeZoomModal()">
         <span class="zoom-close">&times;</span>
-        <img id="zoomedImg" src="" alt="Zoomed Product Image">
+        <img id="zoomedImg" src="" alt="Zoomed Image">
     </div>
 
     <script>
@@ -220,31 +240,22 @@
         }
 
         function loadData() {
-            // ১. ব্রাউজার সেভড মেমোরি থেকে ১ সেকেন্ডের মধ্যে প্রোডাক্ট লোড করে দেখানো (Super Fast)
             const localCached = localStorage.getItem('MUTE_PRODUCTS_CACHE');
             if (localCached) {
-                try {
-                    applyDataToUI(JSON.parse(localCached));
-                } catch(e) { console.error(e); }
+                try { applyDataToUI(JSON.parse(localCached)); } catch(e) { console.error(e); }
             }
 
-            // ২. ব্যাকগ্রাউন্ডে গুগল শিট থেকে তাজা ডাটা ফেচ
             fetch(API_URL)
                 .then(res => res.json())
                 .then(res => {
-                    if (!res || !res.products || res.products.length === 0) {
-                        if (!localCached) {
-                            document.getElementById('productList').innerHTML = '<p style="text-align:center; color:red; padding:20px;">No product data found!</p>';
-                        }
-                        return;
-                    }
+                    if (!res || !res.products || res.products.length === 0) return;
                     localStorage.setItem('MUTE_PRODUCTS_CACHE', JSON.stringify(res));
                     applyDataToUI(res);
                 })
                 .catch(err => {
-                    console.error("API Fetch Error:", err);
+                    console.error(err);
                     if (!localCached) {
-                        document.getElementById('productList').innerHTML = '<p style="text-align:center; color:red; padding:20px;">Failed to load data from API. Please check connection.</p>';
+                        document.getElementById('productList').innerHTML = '<p style="text-align:center; color:red; padding:20px;">Failed to load data from API.</p>';
                     }
                 });
         }
@@ -253,36 +264,27 @@
             document.getElementById('zoomedImg').src = imgSrc;
             document.getElementById('zoomModal').style.display = 'flex';
         }
-
-        function closeZoomModal() {
-            document.getElementById('zoomModal').style.display = 'none';
-        }
+        function closeZoomModal() { document.getElementById('zoomModal').style.display = 'none'; }
 
         function getCurrentLocation() {
             const status = document.getElementById('geoStatus');
             const btn = document.getElementById('geoBtn');
-
             if (!navigator.geolocation) {
                 status.innerText = "Geolocation is not supported by your browser.";
                 return;
             }
-
             btn.innerText = "⌛ Detecting location...";
-            status.innerText = "Please allow location access when prompted.";
-
             navigator.geolocation.getCurrentPosition(
                 function(position) {
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
                     userLocationUrl = `https://maps.google.com/?q=${lat},${lng}`;
-                    
                     btn.innerText = "✅ GPS Location Saved!";
                     btn.style.background = "#2e7d32";
                     status.innerText = `Coordinates: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
-
                     generateInvoicePreview();
                 },
-                function(error) {
+                function() {
                     btn.innerText = "📍 Detect My Current Location";
                     status.innerText = "Location access denied or unavailable.";
                 },
@@ -300,7 +302,6 @@
 
         function renderChips() {
             const chipContainer = document.getElementById('categoryContainer');
-
             if (selectedCategory === 'All') {
                 const categories = ['All', ...new Set(products.map(p => p.category).filter(Boolean))];
                 chipContainer.innerHTML = categories.map(cat => 
@@ -309,14 +310,13 @@
             } else {
                 const categoryProducts = products.filter(p => String(p.category || "").toLowerCase() === selectedCategory.toLowerCase());
                 const brands = ['All', ...new Set(categoryProducts.map(p => p.brand).filter(b => b && b.trim() !== ''))];
-
                 chipContainer.innerHTML = brands.map(brand => 
                     `<button class="cat-chip ${brand === selectedBrand ? 'active' : ''}" onclick="selectBrandChip('${brand}', this)">${brand === 'All' ? 'All Brands' : brand}</button>`
                 ).join('');
             }
         }
 
-        function selectCategoryChip(cat, btn) {
+        function selectCategoryChip(cat) {
             selectedCategory = cat;
             selectedBrand = 'All';
             document.getElementById('categoryDropdown').value = cat;
@@ -344,39 +344,27 @@
         function handleSearchInput() {
             const searchVal = document.getElementById('searchInput').value.trim().toLowerCase();
             const suggestionsBox = document.getElementById('suggestionsBox');
-
-            if (searchVal === "") {
-                closeSuggestions();
-                renderProducts();
-                return;
-            }
+            if (searchVal === "") { closeSuggestions(); renderProducts(); return; }
 
             const matches = products.filter(p => {
                 const matchesCat = (selectedCategory === 'All') || (String(p.category || "").toLowerCase() === selectedCategory.toLowerCase());
                 const matchesBrand = (selectedBrand === 'All') || (String(p.brand || "").toLowerCase() === selectedBrand.toLowerCase());
-
                 const pName = String(p.name || "").toLowerCase();
                 const pBrand = String(p.brand || "").toLowerCase();
                 const pId = String(p.id || "").toLowerCase();
-
                 return matchesCat && matchesBrand && (pName.includes(searchVal) || pBrand.includes(searchVal) || pId.includes(searchVal));
             }).slice(0, 6);
 
             if (matches.length > 0) {
                 suggestionsBox.innerHTML = matches.map(p => {
                     const safeName = p.name.replace(/"/g, '&quot;').replace(/'/g, "\\'");
-                    return `
-                        <div class="suggestion-item" onclick="selectSuggestion('${safeName}')">
-                            <span>🔍 ${p.name} ${p.brand ? `<small style="color:#777">(${p.brand})</small>` : ''}</span>
-                            <span class="suggestion-cat">${p.category}</span>
-                        </div>
-                    `;
+                    return `<div class="suggestion-item" onclick="selectSuggestion('${safeName}')">
+                        <span>🔍 ${p.name} ${p.brand ? `<small style="color:#777">(${p.brand})</small>` : ''}</span>
+                        <span class="suggestion-cat">${p.category}</span>
+                    </div>`;
                 }).join('');
                 suggestionsBox.style.display = 'block';
-            } else {
-                closeSuggestions();
-            }
-
+            } else closeSuggestions();
             renderProducts();
         }
 
@@ -386,23 +374,12 @@
             renderProducts();
         }
 
-        function handleSearchKey(event) {
-            if (event.key === 'Enter') {
-                closeSuggestions();
-                renderProducts();
-            }
-        }
-
+        function handleSearchKey(e) { if (e.key === 'Enter') { closeSuggestions(); renderProducts(); } }
         function closeSuggestions() {
             const suggestionsBox = document.getElementById('suggestionsBox');
             if (suggestionsBox) suggestionsBox.style.display = 'none';
         }
-
-        document.addEventListener('click', function(e) {
-            if (!e.target.closest('.search-input-box')) {
-                closeSuggestions();
-            }
-        });
+        document.addEventListener('click', function(e) { if (!e.target.closest('.search-input-box')) closeSuggestions(); });
 
         function renderProducts() {
             const searchInput = document.getElementById('searchInput');
@@ -411,19 +388,12 @@
             const filtered = products.filter(p => {
                 const matchesCat = (selectedCategory === 'All') || (String(p.category || "").toLowerCase() === selectedCategory.toLowerCase());
                 const matchesBrand = (selectedBrand === 'All') || (String(p.brand || "").toLowerCase() === selectedBrand.toLowerCase());
-
                 const pName = String(p.name || "").toLowerCase();
                 const pBrand = String(p.brand || "").toLowerCase();
                 const pId = String(p.id || "").toLowerCase();
                 const pHsn = String(p.hsn || "").toLowerCase();
 
-                const matchesSearch = (search === "") || 
-                                      pName.includes(search) || 
-                                      pBrand.includes(search) || 
-                                      pId.includes(search) || 
-                                      pHsn.includes(search);
-
-                return matchesCat && matchesBrand && matchesSearch;
+                return matchesCat && matchesBrand && (search === "" || pName.includes(search) || pBrand.includes(search) || pId.includes(search) || pHsn.includes(search));
             });
 
             if (filtered.length === 0) {
@@ -437,33 +407,31 @@
                 const defaultImg = 'logo.png';
                 const imgSrc = p.image_url ? p.image_url : defaultImg;
 
-                return `
-                    <div class="product-card">
-                        <img src="${imgSrc}" class="product-img" onclick="openZoomModal('${imgSrc}')" onerror="this.src='${defaultImg}'" title="Click to zoom image">
-                        <div class="product-info">
-                            <div class="product-id">ID: ${p.id}</div>
-                            ${p.brand ? `<div class="product-brand">${p.brand}</div>` : ''}
-                            <div class="product-title">${p.name}</div>
-                            <div class="price-box">
-                                <span class="offer-price">Rs ${p.offer_price}</span>
-                                ${p.mrp > p.offer_price ? `<span class="mrp-price">Rs ${p.mrp}</span>` : ''}
-                                ${p.discount ? `<span class="discount-badge">${p.discount}</span>` : ''}
-                            </div>
-                            <span class="gst-text">(Incl. ${p.gst}% GST | HSN: ${p.hsn || 'N/A'})</span>
-                            <span class="product-unit">${p.unit}</span>
-                            ${isOutOfStock ? '<div class="out-of-stock">Out of Stock</div>' : ''}
+                return `<div class="product-card">
+                    <img src="${imgSrc}" class="product-img" onclick="openZoomModal('${imgSrc}')" onerror="this.src='${defaultImg}'">
+                    <div class="product-info">
+                        <div class="product-id">ID: ${p.id}</div>
+                        ${p.brand ? `<div class="product-brand">${p.brand}</div>` : ''}
+                        <div class="product-title">${p.name}</div>
+                        <div class="price-box">
+                            <span class="offer-price">Rs ${p.offer_price}</span>
+                            ${p.mrp > p.offer_price ? `<span class="mrp-price">Rs ${p.mrp}</span>` : ''}
+                            ${p.discount ? `<span class="discount-badge">${p.discount}</span>` : ''}
                         </div>
-                        <div>
-                            ${isOutOfStock ? '' : `
-                                <div class="qty-controls">
-                                    <button class="qty-btn" onclick="updateQty('${p.id}', -1)">-</button>
-                                    <span class="qty-count">${qty}</span>
-                                    <button class="qty-btn" onclick="updateQty('${p.id}', 1)">+</button>
-                                </div>
-                            `}
-                        </div>
+                        <span class="gst-text">(Incl. ${p.gst}% GST | HSN: ${p.hsn || 'N/A'})</span>
+                        <span class="product-unit">${p.unit}</span>
+                        ${isOutOfStock ? '<div class="out-of-stock">Out of Stock</div>' : ''}
                     </div>
-                `;
+                    <div>
+                        ${isOutOfStock ? '' : `
+                            <div class="qty-controls">
+                                <button class="qty-btn" onclick="updateQty('${p.id}', -1)">-</button>
+                                <span class="qty-count">${qty}</span>
+                                <button class="qty-btn" onclick="updateQty('${p.id}', 1)">+</button>
+                            </div>
+                        `}
+                    </div>
+                </div>`;
             }).join('');
         }
 
@@ -471,12 +439,7 @@
             const p = products.find(prod => prod.id == id);
             const currentQty = cart[id] || 0;
             const newQty = currentQty + change;
-
-            if (newQty > p.stock) {
-                alert(`Only ${p.stock} items available in stock.`);
-                return;
-            }
-
+            if (newQty > p.stock) { alert(`Only ${p.stock} items available.`); return; }
             if (newQty <= 0) delete cart[id];
             else cart[id] = newQty;
 
@@ -488,19 +451,14 @@
             let items = 0, total = 0;
             Object.keys(cart).forEach(id => {
                 const p = products.find(prod => prod.id == id);
-                if (p) {
-                    items += cart[id];
-                    total += p.offer_price * cart[id];
-                }
+                if (p) { items += cart[id]; total += p.offer_price * cart[id]; }
             });
 
             const bar = document.getElementById('cartBar');
             if (items > 0) {
                 bar.style.display = 'flex';
                 document.getElementById('cartSummary').innerText = `${items} ITEMS - Rs ${total.toFixed(2)}`;
-            } else {
-                bar.style.display = 'none';
-            }
+            } else bar.style.display = 'none';
         }
 
         function openCheckoutModal() {
@@ -513,12 +471,10 @@
                 alert(`Minimum order value is Rs ${MINIMUM_ORDER_VALUE}. Your current total is Rs ${total.toFixed(2)}.`);
                 return;
             }
-            
             if (!currentInvoiceNo) {
                 currentInvoiceNo = storeData.nextInvoiceNo || "INV-0001";
                 currentOrderDate = getFormattedDate();
             }
-            
             generateInvoicePreview();
             document.getElementById('checkoutModal').style.display = 'flex';
         }
@@ -530,28 +486,20 @@
             const phone = document.getElementById('custPhone').value.trim() || '[Phone]';
             const address = document.getElementById('custAddress').value.trim() || '[Address]';
             const landmark = document.getElementById('custLandmark').value.trim() || '[Landmark]';
+            const selectedMode = document.querySelector('input[name="paymentMode"]:checked').value;
 
             let text = `===============================\n        PROFORMA INVOICE       \n===============================\n`;
-            text += `Invoice No: ${currentInvoiceNo}\n`;
-            text += `Date: ${currentOrderDate}\n`;
-            text += `Customer: ${name}\nPhone: ${phone}\nAddress: ${address}\nLandmark: ${landmark}\n`;
-            
-            if (userLocationUrl) {
-                text += `Google Map Pin: ${userLocationUrl}\n`;
-            }
+            text += `Invoice No: ${currentInvoiceNo}\nDate: ${currentOrderDate}\nCustomer: ${name}\nPhone: ${phone}\nAddress: ${address}\nLandmark: ${landmark}\n`;
+            if (userLocationUrl) text += `Google Map Pin: ${userLocationUrl}\n`;
 
             text += `-------------------------------\nItem List (Incl. GST):\n`;
-
-            let grandTotal = 0;
-            let totalBaseAmount = 0;
-            let totalGstAmount = 0;
+            let grandTotal = 0, totalBaseAmount = 0, totalGstAmount = 0;
 
             Object.keys(cart).forEach((id, i) => {
                 const p = products.find(prod => prod.id == id);
                 if (p) {
                     const qty = cart[id];
                     const itemTotal = p.offer_price * qty;
-                    
                     const gstRate = p.gst || 0;
                     const basePrice = itemTotal / (1 + (gstRate / 100));
                     const gstAmt = itemTotal - basePrice;
@@ -565,44 +513,123 @@
             });
 
             currentGrandTotal = grandTotal;
-
-            text += `-------------------------------\n`;
-            text += `Base Price: Rs ${totalBaseAmount.toFixed(2)}\n`;
-            text += `Total GST: Rs ${totalGstAmount.toFixed(2)}\n`;
-            text += `===============================\n`;
-            text += `Grand Total: Rs ${grandTotal.toFixed(2)}\n`;
-            text += `Payment Mode: Cash on Delivery\n`;
-            text += `===============================\n\n`;
-            text += `Thank you! Visit again for ordering:\nhttps://mondal2345.github.io/mute-marketing-solutions/`;
+            text += `-------------------------------\nBase Price: Rs ${totalBaseAmount.toFixed(2)}\nTotal GST: Rs ${totalGstAmount.toFixed(2)}\n===============================\nGrand Total: Rs ${grandTotal.toFixed(2)}\n`;
+            text += `Payment Mode: ${selectedMode === 'COD' ? 'Cash on Delivery (COD)' : 'Paid Online via PayU'}\n===============================\n\n`;
+            text += `Thank you! Visit again:\nhttps://mondal2345.github.io/mute-marketing-solutions/`;
 
             document.getElementById('invoicePreview').innerText = text;
+
+            // বাটনের টেক্সট পরিবর্তন
+            const submitBtn = document.getElementById('submitBtn');
+            if (selectedMode === 'PAYU') {
+                submitBtn.innerText = "Proceed to Pay via PayU";
+                submitBtn.style.background = "#1976d2";
+            } else {
+                submitBtn.innerText = "Place Order via WhatsApp";
+                submitBtn.style.background = "#2e7d32";
+            }
         }
 
-        ['custName', 'custPhone', 'custAddress', 'custLandmark'].forEach(id => {
+        ['custName', 'custPhone', 'custEmail', 'custAddress', 'custLandmark'].forEach(id => {
             document.getElementById(id).addEventListener('input', generateInvoicePreview);
         });
 
         function submitOrder() {
             const name = document.getElementById('custName').value.trim();
             const phone = document.getElementById('custPhone').value.trim();
+            const email = document.getElementById('custEmail').value.trim();
             const address = document.getElementById('custAddress').value.trim();
             const landmark = document.getElementById('custLandmark').value.trim();
+            const selectedMode = document.querySelector('input[name="paymentMode"]:checked').value;
 
             if (!name || !phone || !address || !landmark) {
-                alert('Please fill in all required fields.');
+                alert('Please fill in all required fields (*).');
+                return;
+            }
+
+            if (selectedMode === "PAYU" && !email) {
+                alert('Email address is mandatory for PayU payment gateway.');
                 return;
             }
 
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
-            submitBtn.innerText = "Processing Order...";
+            submitBtn.innerText = "Processing...";
 
-            let orderItems = Object.keys(cart).map(id => ({
-                id: id,
-                qty: cart[id]
-            }));
-
+            let orderItems = Object.keys(cart).map(id => ({ id: id, qty: cart[id] }));
             const fullAddress = `${address}, Landmark: ${landmark}`;
+
+            // 💡 ১. যদি PayU পেমেন্ট মোড সিলেক্ট থাকে
+            if (selectedMode === "PAYU") {
+                const txnid = "TXN_" + new Date().getTime();
+                const amount = currentGrandTotal.toFixed(2);
+                const productinfo = "Order " + currentInvoiceNo;
+
+                // Apps Script ব্যাকএন্ড থেকে PayU Hash আনবে
+                fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        action: "generateHash",
+                        txnid: txnid,
+                        amount: amount,
+                        productinfo: productinfo,
+                        firstname: name,
+                        email: email
+                    })
+                })
+                .then(res => res.json())
+                .then(res => {
+                    if (res.success && res.hash) {
+                        // অর্ডারটি প্রথমে PENDING স্ট্যাটাস হিসেবে সেভ হবে
+                        saveOrderToSheet("PAYU", "PENDING_PAYMENT", function() {
+                            document.getElementById('payu_key').value = storeData.payuMerchantKey;
+                            document.getElementById('payu_hash').value = res.hash;
+                            document.getElementById('payu_txnid').value = txnid;
+                            document.getElementById('payu_amount').value = amount;
+                            document.getElementById('payu_firstname').value = name;
+                            document.getElementById('payu_email').value = email;
+                            document.getElementById('payu_phone').value = phone;
+                            document.getElementById('payu_productinfo').value = productinfo;
+                            document.getElementById('payu_surl').value = window.location.href;
+                            document.getElementById('payu_furl').value = window.location.href;
+
+                            document.getElementById('payuForm').action = storeData.payuActionUrl || "https://secure.payu.in/_payment";
+                            document.getElementById('payuForm').submit();
+                        });
+                    } else alert("Failed to generate PayU Hash!");
+                })
+                .catch(err => {
+                    alert("PayU Processing Failed: " + err);
+                    submitBtn.disabled = false;
+                });
+
+            } else {
+                // 💡 ২. যদি Cash on Delivery (COD) সিলেক্ট থাকে
+                saveOrderToSheet("COD", "COMPLETED", function() {
+                    const invoiceText = document.getElementById('invoicePreview').innerText;
+                    const encoded = encodeURIComponent(`*NEW ORDER GENERATED!*\n\n${invoiceText}`);
+                    window.open(`https://wa.me/${storeData.whatsapp || '919330672659'}?text=${encoded}`, '_blank');
+
+                    cart = {};
+                    currentInvoiceNo = "";
+                    currentOrderDate = "";
+                    submitBtn.disabled = false;
+                    updateCartBar();
+                    closeCheckoutModal();
+                    localStorage.removeItem('MUTE_PRODUCTS_CACHE');
+                    loadData();
+                });
+            }
+        }
+
+        function saveOrderToSheet(paymentMode, status, callback) {
+            const name = document.getElementById('custName').value.trim();
+            const phone = document.getElementById('custPhone').value.trim();
+            const address = document.getElementById('custAddress').value.trim();
+            const landmark = document.getElementById('custLandmark').value.trim();
+            const fullAddress = `${address}, Landmark: ${landmark}`;
+            let orderItems = Object.keys(cart).map(id => ({ id: id, qty: cart[id] }));
 
             fetch(API_URL, {
                 method: 'POST',
@@ -616,27 +643,11 @@
                     customerAddress: fullAddress,
                     gpsLocation: userLocationUrl,
                     totalValue: currentGrandTotal.toFixed(2),
-                    items: orderItems
+                    items: orderItems,
+                    paymentMode: paymentMode,
+                    status: status
                 })
-            }).then(() => {
-                const invoiceText = document.getElementById('invoicePreview').innerText;
-                const encoded = encodeURIComponent(`*NEW ORDER GENERATED!*\n\n${invoiceText}`);
-                window.open(`https://wa.me/${storeData.whatsapp || '919330672659'}?text=${encoded}`, '_blank');
-
-                cart = {};
-                currentInvoiceNo = "";
-                currentOrderDate = "";
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Send Order via WhatsApp";
-                updateCartBar();
-                closeCheckoutModal();
-                localStorage.removeItem('MUTE_PRODUCTS_CACHE'); // স্টক ডাটা রিফ্রেশ করা
-                loadData();
-            }).catch(err => {
-                alert("Order processing failed! Please try again.");
-                submitBtn.disabled = false;
-                submitBtn.innerText = "Send Order via WhatsApp";
-            });
+            }).then(() => { if (callback) callback(); });
         }
 
         window.onload = loadData;
