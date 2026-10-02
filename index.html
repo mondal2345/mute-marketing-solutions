@@ -220,37 +220,34 @@
         }
 
         function loadData() {
-    // ১. ব্রাউজার মেমোরি থেকে ১ সেকেন্ডের মধ্যে প্রোডাক্ট স্ক্রিনে দেখাবে
-    const localCached = localStorage.getItem('MUTE_PRODUCTS_CACHE');
-    if (localCached) {
-        try {
-            const parsedData = JSON.parse(localCached);
-            applyDataToUI(parsedData);
-        } catch(e) { 
-            console.error(e); 
-        }
-    }
-
-    // ২. ব্যাকগ্রাউন্ডে গুগল শিট থেকে ডাটা আনবে (ইউজার কোনো লোডিং দেখবে না)
-    fetch(API_URL)
-        .then(res => res.json())
-        .then(res => {
-            if (!res || !res.products || res.products.length === 0) return;
-            
-            // ক্যাশ আপডেট করা
-            localStorage.setItem('MUTE_PRODUCTS_CACHE', JSON.stringify(res));
-            
-            // ডাটা স্ক্রিনে রেন্ডার
-            applyDataToUI(res);
-        })
-        .catch(err => {
-            console.error("API Fetch Error:", err);
-            if (!localCached) {
-                document.getElementById('productList').innerHTML = 
-                    '<p style="text-align:center; color:red; padding:20px;">Network slow! Please check internet connection.</p>';
+            // ১. ব্রাউজার সেভড মেমোরি থেকে ১ সেকেন্ডের মধ্যে প্রোডাক্ট লোড করে দেখানো (Super Fast)
+            const localCached = localStorage.getItem('MUTE_PRODUCTS_CACHE');
+            if (localCached) {
+                try {
+                    applyDataToUI(JSON.parse(localCached));
+                } catch(e) { console.error(e); }
             }
-        });
-}
+
+            // ২. ব্যাকগ্রাউন্ডে গুগল শিট থেকে তাজা ডাটা ফেচ
+            fetch(API_URL)
+                .then(res => res.json())
+                .then(res => {
+                    if (!res || !res.products || res.products.length === 0) {
+                        if (!localCached) {
+                            document.getElementById('productList').innerHTML = '<p style="text-align:center; color:red; padding:20px;">No product data found!</p>';
+                        }
+                        return;
+                    }
+                    localStorage.setItem('MUTE_PRODUCTS_CACHE', JSON.stringify(res));
+                    applyDataToUI(res);
+                })
+                .catch(err => {
+                    console.error("API Fetch Error:", err);
+                    if (!localCached) {
+                        document.getElementById('productList').innerHTML = '<p style="text-align:center; color:red; padding:20px;">Failed to load data from API. Please check connection.</p>';
+                    }
+                });
+        }
 
         function openZoomModal(imgSrc) {
             document.getElementById('zoomedImg').src = imgSrc;
@@ -633,7 +630,7 @@
                 submitBtn.innerText = "Send Order via WhatsApp";
                 updateCartBar();
                 closeCheckoutModal();
-                localStorage.removeItem('MUTE_PRODUCTS_CACHE'); // ব্যাকএন্ড স্টক আপডেট সিঙ্ক করার জন্য ক্যাশ মুছে ফেলা
+                localStorage.removeItem('MUTE_PRODUCTS_CACHE'); // স্টক ডাটা রিফ্রেশ করা
                 loadData();
             }).catch(err => {
                 alert("Order processing failed! Please try again.");
