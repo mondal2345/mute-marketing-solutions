@@ -3,12 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>mute - Store Ordering App</title>
+    <title>mute marketing solutions Ordering App</title>
 
-    <!-- Social Media / WhatsApp Share Preview Meta Tags -->
-    <meta property="og:title" content="mute - Store Ordering App" />
-    <meta property="og:description" content="Browse products and order easily via WhatsApp. Address: Maheshtala, Kolkata." />
+    <!-- WhatsApp & Social Media Preview Open Graph Meta Tags -->
+    <meta property="og:title" content="mute marketing solutions Ordering App" />
+    <meta property="og:description" content="Browse products and order easily via WhatsApp. Store: Maheshtala, Kolkata." />
     <meta property="og:image" content="https://mondal2345.github.io/mute-marketing-solutions/logo.png" />
+    <meta property="og:image:secure_url" content="https://mondal2345.github.io/mute-marketing-solutions/logo.png" />
+    <meta property="og:image:type" content="image/png" />
     <meta property="og:url" content="https://mondal2345.github.io/mute-marketing-solutions/" />
     <meta property="og:type" content="website" />
 
@@ -18,9 +20,8 @@
 
         .store-header { background: #fff; padding: 15px; border-bottom: 1px solid #e0e0e0; }
         
-        /* Store Logo and Title Alignment */
         .store-brand { 
-            font-size: 24px; 
+            font-size: 20px; 
             font-weight: bold; 
             color: #d32f2f; 
             margin-bottom: 8px; 
@@ -29,8 +30,8 @@
             gap: 10px; 
         }
         .store-logo { 
-            width: 35px; 
-            height: 35px; 
+            width: 36px; 
+            height: 36px; 
             object-fit: contain; 
             border-radius: 6px; 
         }
@@ -83,8 +84,8 @@
 
     <div class="store-header">
         <div class="store-brand">
-            <img src="logo.png" alt="Logo" class="store-logo" onerror="this.style.display='none'">
-            <span id="storeName">mute</span>
+            <img src="logo.png" alt="Logo" class="store-logo" onerror="this.onerror=null; this.src='logo.jpg';">
+            <span id="storeName">mute marketing solutions</span>
         </div>
         <div class="address-box" id="storeAddress">P. O - Chattakalikapur, Lal Pool, P. S - Maheshtala, Dist - 24 Parganas South, Pin - 700140.</div>
         <div class="action-buttons">
@@ -170,7 +171,7 @@
                     storeData = res.store;
                     products = res.products;
 
-                    document.getElementById('storeName').innerText = storeData.name;
+                    document.getElementById('storeName').innerText = storeData.name || "mute marketing solutions";
                     document.getElementById('storeAddress').innerText = storeData.address;
                     document.getElementById('callBtn').href = 'tel:+' + storeData.phone;
                     document.getElementById('waBtn').href = 'https://wa.me/' + storeData.whatsapp;
@@ -379,7 +380,9 @@
             text += `Total GST: Rs ${totalGstAmount.toFixed(2)}\n`;
             text += `===============================\n`;
             text += `Grand Total: Rs ${grandTotal.toFixed(2)}\n`;
-            text += `Payment Mode: Cash on Delivery\n===============================`;
+            text += `Payment Mode: Cash on Delivery\n`;
+            text += `===============================\n\n`;
+            text += `Thank you! Visit again for ordering:\nhttps://mondal2345.github.io/mute-marketing-solutions/`;
 
             document.getElementById('invoicePreview').innerText = text;
         }
