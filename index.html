@@ -266,13 +266,13 @@
         }
 
         function loadData() {
-            // 1. LocalStorage theke instant ui update
+            // ১. ইন্সট্যান্ট স্ক্রিন রেন্ডারের জন্য সেভ হওয়া ক্যাশ
             const localCached = localStorage.getItem('MUTE_PRODUCTS_CACHE');
             if (localCached) {
                 try { applyDataToUI(JSON.parse(localCached)); } catch(e) { console.error(e); }
             }
 
-            // 2. Google Sheet-er fresh live inventory fetch korar URL
+            // 💡 গুগল শিট থেকে লাইভ টাটকা ইনভেন্টরি ফেচ করার প্যারামিটার যুক্ত করা হয়েছে
             const freshApiUrl = API_URL + "?nocache=true&_t=" + new Date().getTime();
 
             fetch(freshApiUrl)
