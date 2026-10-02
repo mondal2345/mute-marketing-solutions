@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>mute marketing solutions Ordering App</title>
+    <title>Mute Marketing Solutions - Ordering App</title>
 
     <!-- PWA Web App Manifest -->
     <link rel="manifest" href="manifest.json">
@@ -15,7 +15,7 @@
     <link rel="shortcut icon" href="logo.png" type="image/x-icon">
 
     <!-- Social Media Preview Meta Tags -->
-    <meta property="og:title" content="mute marketing solutions Ordering App" />
+    <meta property="og:title" content="Mute Marketing Solutions Ordering App" />
     <meta property="og:description" content="Browse products and order easily via WhatsApp. Store: Maheshtala, Kolkata." />
     <meta property="og:image" content="https://mondal2345.github.io/mute-marketing-solutions/logo.png" />
     <meta property="og:image:secure_url" content="https://mondal2345.github.io/mute-marketing-solutions/logo.png" />
@@ -204,29 +204,48 @@
             return `${yyyy}-${mm}-${dd}`;
         }
 
+        function applyDataToUI(res) {
+            if (!res || !res.products || res.products.length === 0) return;
+            storeData = res.store || {};
+            products = res.products || [];
+
+            document.getElementById('storeName').innerText = storeData.name || "mute marketing solutions";
+            if (storeData.address) document.getElementById('storeAddress').innerText = storeData.address;
+            if (storeData.phone) document.getElementById('callBtn').href = 'tel:+' + storeData.phone;
+            if (storeData.whatsapp) document.getElementById('waBtn').href = 'https://wa.me/' + storeData.whatsapp;
+
+            renderCategoriesDropdown();
+            renderChips();
+            renderProducts();
+        }
+
         function loadData() {
+            // ১. ব্রাউজার মেমোরি (LocalStorage) থেকে ইন্সট্যান্ট লোড
+            const localCached = localStorage.getItem('MUTE_PRODUCTS_CACHE');
+            if (localCached) {
+                try {
+                    applyDataToUI(JSON.parse(localCached));
+                } catch(e) { console.error(e); }
+            }
+
+            // ২. ব্যাকগ্রাউন্ডে তাজা ডাটা ফেচ
             fetch(API_URL)
                 .then(res => res.json())
                 .then(res => {
                     if (!res || !res.products || res.products.length === 0) {
-                        document.getElementById('productList').innerHTML = '<p style="text-align:center; color:red; padding:20px;">No product data found in Google Sheet!</p>';
+                        if (!localCached) {
+                            document.getElementById('productList').innerHTML = '<p style="text-align:center; color:red; padding:20px;">No product data found!</p>';
+                        }
                         return;
                     }
-                    storeData = res.store || {};
-                    products = res.products || [];
-
-                    document.getElementById('storeName').innerText = storeData.name || "mute marketing solutions";
-                    if(storeData.address) document.getElementById('storeAddress').innerText = storeData.address;
-                    if(storeData.phone) document.getElementById('callBtn').href = 'tel:+' + storeData.phone;
-                    if(storeData.whatsapp) document.getElementById('waBtn').href = 'https://wa.me/' + storeData.whatsapp;
-
-                    renderCategoriesDropdown();
-                    renderChips();
-                    renderProducts();
+                    localStorage.setItem('MUTE_PRODUCTS_CACHE', JSON.stringify(res));
+                    applyDataToUI(res);
                 })
                 .catch(err => {
                     console.error(err);
-                    document.getElementById('productList').innerHTML = '<p style="text-align:center; color:red; padding:20px;">Failed to load data from API.</p>';
+                    if (!localCached) {
+                        document.getElementById('productList').innerHTML = '<p style="text-align:center; color:red; padding:20px;">Failed to load data from API.</p>';
+                    }
                 });
         }
 
@@ -469,7 +488,7 @@
             let items = 0, total = 0;
             Object.keys(cart).forEach(id => {
                 const p = products.find(prod => prod.id == id);
-                if(p) {
+                if (p) {
                     items += cart[id];
                     total += p.offer_price * cart[id];
                 }
@@ -585,7 +604,6 @@
 
             const fullAddress = `${address}, Landmark: ${landmark}`;
 
-            // 💡 গুগল শিটে ব্যাকএন্ডে অর্ডার পাঠানোর ডাটা
             fetch(API_URL, {
                 method: 'POST',
                 mode: 'no-cors',
@@ -601,12 +619,10 @@
                     items: orderItems
                 })
             }).then(() => {
-                // হোয়াটসঅ্যাপে পাঠাবো
                 const invoiceText = document.getElementById('invoicePreview').innerText;
                 const encoded = encodeURIComponent(`*NEW ORDER GENERATED!*\n\n${invoiceText}`);
                 window.open(`https://wa.me/${storeData.whatsapp || '919330672659'}?text=${encoded}`, '_blank');
 
-                // ফর্ম রিসেট
                 cart = {};
                 currentInvoiceNo = "";
                 currentOrderDate = "";
@@ -614,7 +630,8 @@
                 submitBtn.innerText = "Send Order via WhatsApp";
                 updateCartBar();
                 closeCheckoutModal();
-                loadData(); // ব্যাকএন্ড স্টক রিলোড
+                localStorage.removeItem('MUTE_PRODUCTS_CACHE'); // ব্যাকএন্ড স্টক আপডেট সিঙ্ক করার জন্য ক্যাশ মুছে ফেলা
+                loadData();
             }).catch(err => {
                 alert("Order processing failed! Please try again.");
                 submitBtn.disabled = false;
