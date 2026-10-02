@@ -1,82 +1,323 @@
-function doGet() {
-  var sheet = SpreadsheetApp.getActiveSpreadsheet().getActiveSheet();
-  var data = sheet.getDataRange().getValues();
-  var products = [];
-  
-  for (var i = 1; i < data.length; i++) {
-    var row = data[i];
-    if (!row || row.length === 0 || (!row[0] && !row[3])) continue;
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Store Ordering App</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+        body { background-color: #f5f5f5; padding-bottom: 90px; }
 
-    var mrpVal = parseFloat(row[6]) || 0;
-    var offerVal = parseFloat(row[7]) || mrpVal;
-    
-    products.push({
-      id: String(row[0] || i),
-      category: String(row[1] || 'All'),
-      brand: String(row[2] || ''),
-      name: String(row[3] || ''),
-      hsn: String(row[4] || ''),
-      gst: parseFloat(row[5]) || 0,
-      mrp: mrpVal,
-      offer_price: offerVal,
-      discount: String(row[8] || ''),
-      unit: String(row[9] || 'Pcs'),
-      stock: parseInt(row[10]) || 0,
-      image_url: String(row[11] || '')
-    });
-  }
+        .store-header { background: #fff; padding: 15px; border-bottom: 1px solid #e0e0e0; }
+        .store-brand { font-size: 24px; font-weight: bold; color: #d32f2f; margin-bottom: 8px; }
+        .address-box { font-size: 13px; color: #555; margin-bottom: 15px; }
+        .action-buttons { display: flex; gap: 10px; }
+        .btn-action { flex: 1; padding: 10px; border-radius: 8px; font-size: 14px; font-weight: 600; text-align: center; text-decoration: none; cursor: pointer; display: block; }
+        .btn-call { border: 1.5px solid #1976d2; color: #1976d2; background: #fff; }
+        .btn-whatsapp { border: 1.5px solid #2e7d32; color: #2e7d32; background: #fff; }
 
-  var storeInfo = {
-    name: "mute",
-    address: "P. O - Chattakalikapur, Lal Pool, P. S - Maheshtala, Dist - 24 Parganas South, Pin - 700140.",
-    phone: "919330672659",
-    whatsapp: "919330672659"
-  };
+        .search-container { padding: 15px; background: #fff; margin-top: 8px; }
+        .search-input { width: 100%; padding: 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 15px; outline: none; }
+        
+        .categories-scroll { display: flex; gap: 10px; overflow-x: auto; padding: 12px 15px; background: #fff; }
+        .cat-chip { padding: 8px 18px; border-radius: 20px; border: 1px solid #ccc; background: #fff; cursor: pointer; white-space: nowrap; }
+        .cat-chip.active { border-color: #d32f2f; color: #d32f2f; background: #fde8e8; font-weight: bold; }
 
-  var response = {
-    store: storeInfo,
-    products: products
-  };
+        .product-list { padding: 10px 15px; }
+        .product-card { background: #fff; border-radius: 10px; padding: 12px; margin-bottom: 12px; display: flex; align-items: center; gap: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .product-img { width: 70px; height: 70px; object-fit: cover; border-radius: 8px; background: #eee; flex-shrink: 0; }
+        .product-info { flex: 1; }
+        .product-brand { font-size: 11px; font-weight: bold; color: #1976d2; text-transform: uppercase; margin-bottom: 2px; }
+        .product-title { font-size: 14px; font-weight: 600; color: #222; margin-bottom: 4px; }
+        
+        .price-box { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+        .offer-price { font-size: 15px; font-weight: bold; color: #111; }
+        .mrp-price { font-size: 12px; color: #888; text-decoration: line-through; }
+        .discount-badge { font-size: 10px; color: #2e7d32; background: #e8f5e9; padding: 2px 5px; border-radius: 4px; font-weight: bold; }
+        .gst-text { font-size: 10px; color: #666; font-style: italic; }
+        .product-unit { font-size: 12px; color: #777; display: block; margin-top: 2px; }
+        .out-of-stock { color: #d32f2f; font-size: 12px; font-weight: bold; margin-top: 4px; }
 
-  return ContentService.createTextOutput(JSON.stringify(response))
-    .setMimeType(ContentService.MimeType.JSON);
-}
+        .qty-controls { display: flex; align-items: center; border: 1px solid #1976d2; border-radius: 20px; }
+        .qty-btn { width: 32px; height: 32px; background: #fff; color: #1976d2; border: none; font-size: 18px; font-weight: bold; cursor: pointer; }
+        .qty-count { padding: 0 10px; font-size: 14px; font-weight: bold; color: #1976d2; }
 
-// অটোমেটিক অফার প্রাইস ও ডিসকাউন্ট হিসেব
-function onEdit(e) {
-  if (!e) return;
-  var range = e.range;
-  var sheet = range.getSheet();
-  var row = range.getRow();
-  var col = range.getColumn();
-  
-  if (row <= 1) return;
-  
-  var mrp = parseFloat(sheet.getRange(row, 7).getValue());
-  var offerPriceCell = sheet.getRange(row, 8);
-  var discountCell = sheet.getRange(row, 9);
-  
-  if (!mrp || mrp <= 0) return;
-  
-  if (col === 8) {
-    var offerPrice = parseFloat(offerPriceCell.getValue());
-    if (!isNaN(offerPrice) && offerPrice > 0) {
-      if (offerPrice < mrp) {
-        var discPercent = Math.round(((mrp - offerPrice) / mrp) * 100);
-        discountCell.setValue(discPercent + "% OFF");
-      } else {
-        discountCell.setValue("0% OFF");
-      }
-    }
-  }
-  
-  if (col === 9) {
-    var discountVal = discountCell.getValue().toString().replace(/[^0-9.]/g, '');
-    var discPercent = parseFloat(discountVal);
-    
-    if (!isNaN(discPercent) && discPercent > 0) {
-      var calculatedOfferPrice = mrp - ((mrp * discPercent) / 100);
-      offerPriceCell.setValue(Math.round(calculatedOfferPrice));
-    }
-  }
-}
+        .cart-bar { position: fixed; bottom: 0; left: 0; right: 0; background: #0288d1; color: #fff; padding: 12px 20px; display: flex; justify-content: space-between; align-items: center; z-index: 100; }
+        .btn-view-cart { background: transparent; border: none; color: #fff; font-size: 16px; font-weight: bold; cursor: pointer; }
+
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 200; justify-content: center; align-items: center; }
+        .modal-content { background: #fff; width: 90%; max-width: 450px; border-radius: 12px; padding: 20px; max-height: 90vh; overflow-y: auto; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 13px; font-weight: bold; margin-bottom: 5px; }
+        .form-group input, .form-group textarea { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-size: 14px; }
+        .invoice-preview { background: #f9f9f9; border: 1px dashed #ccc; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 11px; margin-bottom: 15px; white-space: pre-wrap; line-height: 1.4; }
+        .btn-submit-order { width: 100%; padding: 12px; background: #2e7d32; color: #fff; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; }
+    </style>
+</head>
+<body>
+
+    <div class="store-header">
+        <div class="store-brand" id="storeName">mute</div>
+        <div class="address-box" id="storeAddress">P. O - Chattakalikapur, Lal Pool, P. S - Maheshtala, Dist - 24 Parganas South, Pin - 700140.</div>
+        <div class="action-buttons">
+            <a id="callBtn" href="tel:+919330672659" class="btn-action btn-call">Call Store</a>
+            <a id="waBtn" href="https://wa.me/919330672659" target="_blank" class="btn-action btn-whatsapp">Send Whatsapp</a>
+        </div>
+    </div>
+
+    <div class="search-container">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search item, brand or HSN..." oninput="filterProducts()">
+    </div>
+
+    <div class="categories-scroll" id="categoryContainer">
+        <button class="cat-chip active" onclick="selectCategory('All', this)">All</button>
+    </div>
+
+    <div class="product-list" id="productList">
+        <p style="text-align: center; color: #666; margin-top: 20px;">Loading Products...</p>
+    </div>
+
+    <div class="cart-bar" id="cartBar" style="display: none;">
+        <div id="cartSummary" style="font-weight: bold;">0 ITEMS - Rs 0.00</div>
+        <button class="btn-view-cart" onclick="openCheckoutModal()">View cart</button>
+    </div>
+
+    <div class="modal-overlay" id="checkoutModal">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <strong>Checkout & Proforma Invoice</strong>
+                <button onclick="closeCheckoutModal()" style="border:none; background:none; font-size:18px; cursor:pointer;">X</button>
+            </div>
+
+            <div class="form-group">
+                <label>Your Name*</label>
+                <input type="text" id="custName" placeholder="Enter Full Name">
+            </div>
+            <div class="form-group">
+                <label>WhatsApp Number*</label>
+                <input type="tel" id="custPhone" placeholder="10 Digit Phone Number">
+            </div>
+            <div class="form-group">
+                <label>Full Address*</label>
+                <textarea id="custAddress" rows="2" placeholder="House No, Street, Area"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Landmark*</label>
+                <input type="text" id="custLandmark" placeholder="Nearby Landmark">
+            </div>
+
+            <label style="font-size: 13px; font-weight: bold;">Proforma Invoice Preview (Tax Inclusive):</label>
+            <div class="invoice-preview" id="invoicePreview"></div>
+
+            <button class="btn-submit-order" onclick="submitOrder()">Send Order via WhatsApp</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = "https://script.google.com/macros/s/AKfycbzACl2swrFTEQAD4vgWW6pUQWQXpp-TPaaDiRTOc8Zi0yWQmeYuGmINoKhGJVj7ApzPkg/exec"; 
+        
+        const MINIMUM_ORDER_VALUE = 1000;
+        let storeData = {};
+        let products = [];
+        let cart = {};
+        let selectedCategory = 'All';
+
+        function loadData() {
+            fetch(API_URL)
+                .then(res => res.json())
+                .then(res => {
+                    if (!res || !res.products || res.products.length === 0) {
+                        document.getElementById('productList').innerHTML = '<p style="text-align:center; color:red; padding:20px;">No product data found in Google Sheet!</p>';
+                        return;
+                    }
+                    storeData = res.store;
+                    products = res.products;
+
+                    document.getElementById('storeName').innerText = storeData.name;
+                    document.getElementById('storeAddress').innerText = storeData.address;
+                    document.getElementById('callBtn').href = 'tel:+' + storeData.phone;
+                    document.getElementById('waBtn').href = 'https://wa.me/' + storeData.whatsapp;
+
+                    renderCategories();
+                    renderProducts();
+                })
+                .catch(err => {
+                    console.error(err);
+                    document.getElementById('productList').innerHTML = '<p style="text-align:center; color:red; padding:20px;">Failed to load data from API.</p>';
+                });
+        }
+
+        function renderCategories() {
+            const categories = ['All', ...new Set(products.map(p => p.category))];
+            document.getElementById('categoryContainer').innerHTML = categories.map(cat => 
+                `<button class="cat-chip ${cat === selectedCategory ? 'active' : ''}" onclick="selectCategory('${cat}', this)">${cat}</button>`
+            ).join('');
+        }
+
+        function selectCategory(cat, btn) {
+            selectedCategory = cat;
+            document.querySelectorAll('.cat-chip').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            renderProducts();
+        }
+
+        function renderProducts() {
+            const search = document.getElementById('searchInput').value.toLowerCase();
+            const filtered = products.filter(p => {
+                const matchesCat = selectedCategory === 'All' || p.category === selectedCategory;
+                const matchesSearch = p.name.toLowerCase().includes(search) || p.brand.toLowerCase().includes(search) || p.hsn.toString().includes(search);
+                return matchesCat && matchesSearch;
+            });
+
+            if (filtered.length === 0) {
+                document.getElementById('productList').innerHTML = '<p style="text-align:center; color:#888; padding:20px;">No product found</p>';
+                return;
+            }
+
+            document.getElementById('productList').innerHTML = filtered.map(p => {
+                const qty = cart[p.id] || 0;
+                const isOutOfStock = p.stock <= 0;
+                const defaultImg = 'https://via.placeholder.com/70?text=No+Image';
+                const imgSrc = p.image_url ? p.image_url : defaultImg;
+
+                return `
+                    <div class="product-card">
+                        <img src="${imgSrc}" class="product-img" onerror="this.src='${defaultImg}'">
+                        <div class="product-info">
+                            ${p.brand ? `<div class="product-brand">${p.brand}</div>` : ''}
+                            <div class="product-title">${p.name}</div>
+                            <div class="price-box">
+                                <span class="offer-price">Rs ${p.offer_price}</span>
+                                ${p.mrp > p.offer_price ? `<span class="mrp-price">Rs ${p.mrp}</span>` : ''}
+                                ${p.discount ? `<span class="discount-badge">${p.discount}</span>` : ''}
+                            </div>
+                            <span class="gst-text">(Incl. ${p.gst}% GST | HSN: ${p.hsn || 'N/A'})</span>
+                            <span class="product-unit">${p.unit}</span>
+                            ${isOutOfStock ? '<div class="out-of-stock">Out of Stock</div>' : ''}
+                        </div>
+                        <div>
+                            ${isOutOfStock ? '' : `
+                                <div class="qty-controls">
+                                    <button class="qty-btn" onclick="updateQty('${p.id}', -1)">-</button>
+                                    <span class="qty-count">${qty}</span>
+                                    <button class="qty-btn" onclick="updateQty('${p.id}', 1)">+</button>
+                                </div>
+                            `}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function filterProducts() { renderProducts(); }
+
+        function updateQty(id, change) {
+            const p = products.find(prod => prod.id == id);
+            const currentQty = cart[id] || 0;
+            const newQty = currentQty + change;
+
+            if (newQty > p.stock) {
+                alert(`Only ${p.stock} items available in stock.`);
+                return;
+            }
+
+            if (newQty <= 0) delete cart[id];
+            else cart[id] = newQty;
+
+            renderProducts();
+            updateCartBar();
+        }
+
+        function updateCartBar() {
+            let items = 0, total = 0;
+            Object.keys(cart).forEach(id => {
+                const p = products.find(prod => prod.id == id);
+                items += cart[id];
+                total += p.offer_price * cart[id];
+            });
+
+            const bar = document.getElementById('cartBar');
+            if (items > 0) {
+                bar.style.display = 'flex';
+                document.getElementById('cartSummary').innerText = `${items} ITEMS - Rs ${total.toFixed(2)}`;
+            } else {
+                bar.style.display = 'none';
+            }
+        }
+
+        function openCheckoutModal() {
+            let total = Object.keys(cart).reduce((sum, id) => sum + (products.find(p => p.id == id).offer_price * cart[id]), 0);
+            if (total < MINIMUM_ORDER_VALUE) {
+                alert(`Minimum order value is Rs ${MINIMUM_ORDER_VALUE}. Your current total is Rs ${total}.`);
+                return;
+            }
+            generateInvoicePreview();
+            document.getElementById('checkoutModal').style.display = 'flex';
+        }
+
+        function closeCheckoutModal() { document.getElementById('checkoutModal').style.display = 'none'; }
+
+        function generateInvoicePreview() {
+            const name = document.getElementById('custName').value || '[Name]';
+            const phone = document.getElementById('custPhone').value || '[Phone]';
+            const address = document.getElementById('custAddress').value || '[Address]';
+            const landmark = document.getElementById('custLandmark').value || '[Landmark]';
+
+            let text = `===============================\n        PROFORMA INVOICE       \n===============================\n`;
+            text += `Customer: ${name}\nPhone: ${phone}\nAddress: ${address}\nLandmark: ${landmark}\n-------------------------------\nItem List (Incl. GST):\n`;
+
+            let grandTotal = 0;
+            let totalBaseAmount = 0;
+            let totalGstAmount = 0;
+
+            Object.keys(cart).forEach((id, i) => {
+                const p = products.find(prod => prod.id == id);
+                const qty = cart[id];
+                const itemTotal = p.offer_price * qty;
+                
+                const gstRate = p.gst || 0;
+                const basePrice = itemTotal / (1 + (gstRate / 100));
+                const gstAmt = itemTotal - basePrice;
+
+                grandTotal += itemTotal;
+                totalBaseAmount += basePrice;
+                totalGstAmount += gstAmt;
+
+                text += `${i + 1}. ${p.name}\n   HSN: ${p.hsn || 'N/A'} | Qty: ${qty}\n   Price: ${qty} x Rs ${p.offer_price} = Rs ${itemTotal.toFixed(2)}\n`;
+            });
+
+            text += `-------------------------------\n`;
+            text += `Base Price: Rs ${totalBaseAmount.toFixed(2)}\n`;
+            text += `Total GST: Rs ${totalGstAmount.toFixed(2)}\n`;
+            text += `===============================\n`;
+            text += `Grand Total: Rs ${grandTotal.toFixed(2)}\n`;
+            text += `Payment Mode: Cash on Delivery\n===============================`;
+
+            document.getElementById('invoicePreview').innerText = text;
+        }
+
+        ['custName', 'custPhone', 'custAddress', 'custLandmark'].forEach(id => {
+            document.getElementById(id).addEventListener('input', generateInvoicePreview);
+        });
+
+        function submitOrder() {
+            const name = document.getElementById('custName').value.trim();
+            const phone = document.getElementById('custPhone').value.trim();
+            const address = document.getElementById('custAddress').value.trim();
+            const landmark = document.getElementById('custLandmark').value.trim();
+
+            if (!name || !phone || !address || !landmark) {
+                alert('Please fill in all required fields.');
+                return;
+            }
+
+            const invoiceText = document.getElementById('invoicePreview').innerText;
+            const encoded = encodeURIComponent(`*NEW ORDER GENERATED!*\n\n${invoiceText}`);
+
+            window.open(`https://wa.me/${storeData.whatsapp}?text=${encoded}`, '_blank');
+        }
+
+        window.onload = loadData;
+    </script>
+</body>
+</html>
