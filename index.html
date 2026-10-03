@@ -842,7 +842,7 @@
             text += `Invoice No: ${currentInvoiceNo}\nDate: ${currentOrderDate}\n`;
             if (currentCustomerId) text += `Customer ID: ${currentCustomerId}\n`;
             text += `Customer: ${name}\nPhone: ${phone}\nAddress: ${address}\nLandmark: ${landmark}\nPincode: ${verifiedPincode} (${verifiedAreaName})\n`;
-            if (userLocationUrl) text += `Google Map Pin: ${userLocationUrl}\n`;
+            text += `Google Map Pin:\n${userLocationUrl ? userLocationUrl : ''}\n`;
 
             text += `-------------------------------\nItem List (Incl. GST):\n`;
             let grandTotal = 0, totalBaseAmount = 0, totalGstAmount = 0;
@@ -924,7 +924,6 @@
             const email = document.getElementById('custEmail').value.trim();
             const address = document.getElementById('custAddress').value.trim();
             const landmark = document.getElementById('custLandmark').value.trim();
-            const fullAddress = `${address}, Landmark: ${landmark}`;
             let orderItems = Object.keys(cart).map(id => ({ id: id, qty: cart[id] }));
 
             const payload = {
@@ -934,10 +933,10 @@
                 customerName: name,
                 customerPhone: phone,
                 customerEmail: email,
-                customerAddress: fullAddress,
+                customerAddress: address,
                 customerLandmark: landmark,
                 customerPincode: `${verifiedPincode} (${verifiedAreaName})`,
-                gpsLocation: userLocationUrl || "N/A",
+                gpsLocation: userLocationUrl ? userLocationUrl : "N/A",
                 totalValue: currentGrandTotal.toFixed(2),
                 items: orderItems,
                 paymentMode: "COD"
