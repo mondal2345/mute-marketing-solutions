@@ -681,6 +681,8 @@
 
             const upiId = storeData.directUpiId || "9330672659@ybl";
             const upiName = storeData.directUpiName || "Mute Marketing Solutions";
+
+            generateInvoicePreview();
             
             if (selectedMode === "DIRECT_UPI") {
                 upiBox.style.display = "block";
@@ -704,7 +706,6 @@
                     submitBtn.style.background = "#2e7d32";
                 }
             }
-            generateInvoicePreview();
         }
 
         function generateInvoicePreview() {
