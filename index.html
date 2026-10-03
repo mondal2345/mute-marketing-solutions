@@ -296,6 +296,22 @@
             return `${yyyy}-${mm}-${dd}`;
         }
 
+        function checkPayuReturnParams() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const status = urlParams.get('status') || urlParams.get('payu_status');
+            const txnid = urlParams.get('txnid');
+            const payuMoneyId = urlParams.get('payuMoneyId') || urlParams.get('mihpayid');
+            const inv = urlParams.get('inv');
+
+            if (status === 'success' && inv) {
+                fetch(`${API_URL}?action=handlePayuSuccess&invoiceNo=${encodeURIComponent(inv)}&txnid=${encodeURIComponent(txnid || '')}&payuMoneyId=${encodeURIComponent(payuMoneyId || '')}`)
+                .then(() => {
+                    showAlert(`Payment Successful! Your order ${inv} has been confirmed.`);
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }).catch(err => console.error(err));
+            }
+        }
+
         function applyDataToUI(res) {
             if (!res || !res.products || res.products.length === 0) return;
             storeData = res.store || {};
@@ -312,6 +328,8 @@
         }
 
         function loadData() {
+            checkPayuReturnParams();
+
             const localCached = localStorage.getItem('MUTE_PRODUCTS_CACHE');
             if (localCached) {
                 try { applyDataToUI(JSON.parse(localCached)); } catch(e) { console.error(e); }
@@ -775,7 +793,7 @@
                 });
 
             } else {
-                saveOrderToSheet("COD", "COMPLETED", function() {
+                saveOrderToSheet("COD", function() {
                     const invoiceText = document.getElementById('invoicePreview').innerText;
                     const encoded = encodeURIComponent(`*NEW ORDER GENERATED!*\n\n${invoiceText}`);
                     window.open(`https://wa.me/${storeData.whatsapp || '919330672659'}?text=${encoded}`, '_blank');
@@ -784,6 +802,7 @@
                     currentInvoiceNo = "";
                     currentOrderDate = "";
                     currentCustomerId = "";
+                    userLocationUrl = "";
                     submitBtn.disabled = false;
                     updateCartBar();
                     closeCheckoutModal();
@@ -794,7 +813,9 @@
         }
 
         function executePayuRedirect(hash, txnid, amount, name, email, phone, productinfo) {
-            saveOrderToSheet("PAYU", "PENDING_PAYMENT", function() {
+            saveOrderToSheet("PAYU", function() {
+                const redirectUrl = window.location.href.split('?')[0] + `?status=success&inv=${encodeURIComponent(currentInvoiceNo)}`;
+
                 document.getElementById('payu_key').value = storeData.payuMerchantKey;
                 document.getElementById('payu_hash').value = hash;
                 document.getElementById('payu_txnid').value = txnid;
@@ -803,15 +824,15 @@
                 document.getElementById('payu_email').value = email;
                 document.getElementById('payu_phone').value = phone;
                 document.getElementById('payu_productinfo').value = productinfo;
-                document.getElementById('payu_surl').value = window.location.href;
-                document.getElementById('payu_furl').value = window.location.href;
+                document.getElementById('payu_surl').value = redirectUrl;
+                document.getElementById('payu_furl').value = redirectUrl;
 
                 document.getElementById('payuForm').action = storeData.payuActionUrl || "https://secure.payu.in/_payment";
                 document.getElementById('payuForm').submit();
             });
         }
 
-        function saveOrderToSheet(paymentMode, status, callback) {
+        function saveOrderToSheet(paymentMode, callback) {
             const name = document.getElementById('custName').value.trim();
             const phone = document.getElementById('custPhone').value.trim();
             const email = document.getElementById('custEmail').value.trim();
@@ -832,8 +853,7 @@
                 gpsLocation: userLocationUrl || "N/A",
                 totalValue: currentGrandTotal.toFixed(2),
                 items: orderItems,
-                paymentMode: paymentMode,
-                status: status
+                paymentMode: paymentMode
             };
 
             fetch(API_URL, {
