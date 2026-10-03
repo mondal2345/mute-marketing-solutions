@@ -940,66 +940,73 @@
         });
 
         function submitOrder() {
-            const name = document.getElementById('custName').value.trim();
-            const phone = document.getElementById('custPhone').value.trim();
-            const address = document.getElementById('custAddress').value.trim();
-            const landmark = document.getElementById('custLandmark').value.trim();
-            const needGst = document.getElementById('needGstCheckbox').checked;
-            const businessName = document.getElementById('gstBusinessName').value.trim();
-            const gstNo = document.getElementById('gstNumber').value.trim();
+    const name = document.getElementById('custName').value.trim();
+    const phone = document.getElementById('custPhone').value.trim();
+    const address = document.getElementById('custAddress').value.trim();
+    const landmark = document.getElementById('custLandmark').value.trim();
+    const needGst = document.getElementById('needGstCheckbox').checked;
+    const businessName = document.getElementById('gstBusinessName').value.trim();
+    const gstNo = document.getElementById('gstNumber').value.trim();
 
-            if (!name || !phone || !address || !landmark) {
-                showAlert('Please fill in all required fields (*).');
-                return;
-            }
+    if (!name || !phone || !address || !landmark) {
+        showAlert('Please fill in all required fields (*).');
+        return;
+    }
 
-            if (phone.length < 10) {
-                showAlert('Please enter a valid 10-digit WhatsApp number.');
-                return;
-            }
+    if (phone.length < 10) {
+        showAlert('Please enter a valid 10-digit WhatsApp number.');
+        return;
+    }
 
-            if (needGst && (!businessName || !gstNo)) {
-                showAlert('Please enter Business Name and GSTIN for GST Bill.');
-                return;
-            }
+    if (needGst && (!businessName || !gstNo)) {
+        showAlert('Please enter Business Name and GSTIN for GST Bill.');
+        return;
+    }
 
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.innerText = "⏳ Processing Order & PDF Link...";
+    const submitBtn = document.getElementById('submitBtn');
+    submitBtn.disabled = true;
+    submitBtn.innerText = "⏳ Processing Order & PDF Link...";
 
-            saveOrderToSheet("COD", function(res) {
-                submitBtn.innerText = "Place Order via WhatsApp";
-                submitBtn.disabled = false;
+    saveOrderToSheet("COD", function(res) {
+        submitBtn.innerText = "Place Order via WhatsApp";
+        submitBtn.disabled = false;
 
-                let pdfLinkText = "";
+        let pdfLinkText = "";
 
-                if (res && res.pdfUrl && res.pdfUrl !== "N/A" && res.pdfUrl !== "PDF_GEN_ERROR") {
-                    pdfLinkText = `\n📄 *Download Official Invoice PDF:*\n${res.pdfUrl}`;
-                }
-
-                let invoiceText = document.getElementById('invoicePreview').innerText;
-                let fullMessage = `${invoiceText}${pdfLinkText}`;
-
-                const encodedMsg = encodeURIComponent(fullMessage);
-                const targetPhone = storeData.whatsapp || '919330672659';
-                
-                window.open(`https://wa.me/${targetPhone}?text=${encodedMsg}`, '_blank');
-
-                cart = {};
-                currentInvoiceNo = "";
-                currentOrderDate = "";
-                currentCustomerId = "";
-                userLocationUrl = "";
-                verifiedPincode = "";
-                verifiedAreaName = "";
-                document.getElementById('needGstCheckbox').checked = false;
-                document.getElementById('gstFieldsContainer').style.display = 'none';
-                updateCartBar();
-                closeCheckoutModal();
-                localStorage.removeItem('MUTE_PRODUCTS_CACHE');
-                loadData();
-            });
+        if (res && res.pdfUrl && res.pdfUrl !== "N/A" && res.pdfUrl !== "PDF_GEN_ERROR") {
+            pdfLinkText = `\n📄 *Download Official Invoice PDF:*\n${res.pdfUrl}`;
         }
+
+        let invoiceText = document.getElementById('invoicePreview').innerText;
+        let fullMessage = `${invoiceText}${pdfLinkText}`;
+
+        const encodedMsg = encodeURIComponent(fullMessage);
+        const targetPhone = storeData.whatsapp || '919330672659';
+        
+        // নেটিভ হোয়াটসঅ্যাপ অ্যাপ খোলার সরাসরি স্কিম
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        
+        if (isMobile) {
+            window.location.href = `whatsapp://send?phone=${targetPhone}&text=${encodedMsg}`;
+        } else {
+            window.open(`https://web.whatsapp.com/send?phone=${targetPhone}&text=${encodedMsg}`, '_blank');
+        }
+
+        cart = {};
+        currentInvoiceNo = "";
+        currentOrderDate = "";
+        currentCustomerId = "";
+        userLocationUrl = "";
+        verifiedPincode = "";
+        verifiedAreaName = "";
+        document.getElementById('needGstCheckbox').checked = false;
+        document.getElementById('gstFieldsContainer').style.display = 'none';
+        updateCartBar();
+        closeCheckoutModal();
+        localStorage.removeItem('MUTE_PRODUCTS_CACHE');
+        loadData();
+    });
+}
 
         function saveOrderToSheet(paymentMode, callback) {
             const name = document.getElementById('custName').value.trim();
