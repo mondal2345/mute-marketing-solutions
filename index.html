@@ -813,24 +813,27 @@
         }
 
         function executePayuRedirect(hash, txnid, amount, name, email, phone, productinfo) {
-            saveOrderToSheet("PAYU", function() {
-                const redirectUrl = window.location.href.split('?')[0] + `?status=success&inv=${encodeURIComponent(currentInvoiceNo)}`;
+    saveOrderToSheet("PAYU", function() {
+        // PayU পেমেন্ট পেজে পাঠানোর আগে surl এবং furl ঠিক করা
+        const currentBaseUrl = window.location.href.split('?')[0];
+        
+        document.getElementById('payu_key').value = storeData.payuMerchantKey;
+        document.getElementById('payu_hash').value = hash;
+        document.getElementById('payu_txnid').value = txnid;
+        document.getElementById('payu_amount').value = amount;
+        document.getElementById('payu_firstname').value = name;
+        document.getElementById('payu_email').value = email;
+        document.getElementById('payu_phone').value = phone;
+        document.getElementById('payu_productinfo').value = productinfo;
+        
+        // 💡 405 Error আটকানোর জন্য GitHub Pages-এর রিডাইরেক্ট URL
+        document.getElementById('payu_surl').value = currentBaseUrl + "?status=success&inv=" + encodeURIComponent(currentInvoiceNo);
+        document.getElementById('payu_furl').value = currentBaseUrl + "?status=failed&inv=" + encodeURIComponent(currentInvoiceNo);
 
-                document.getElementById('payu_key').value = storeData.payuMerchantKey;
-                document.getElementById('payu_hash').value = hash;
-                document.getElementById('payu_txnid').value = txnid;
-                document.getElementById('payu_amount').value = amount;
-                document.getElementById('payu_firstname').value = name;
-                document.getElementById('payu_email').value = email;
-                document.getElementById('payu_phone').value = phone;
-                document.getElementById('payu_productinfo').value = productinfo;
-                document.getElementById('payu_surl').value = redirectUrl;
-                document.getElementById('payu_furl').value = redirectUrl;
-
-                document.getElementById('payuForm').action = storeData.payuActionUrl || "https://secure.payu.in/_payment";
-                document.getElementById('payuForm').submit();
-            });
-        }
+        document.getElementById('payuForm').action = storeData.payuActionUrl || "https://secure.payu.in/_payment";
+        document.getElementById('payuForm').submit();
+    });
+}
 
         function saveOrderToSheet(paymentMode, callback) {
             const name = document.getElementById('custName').value.trim();
