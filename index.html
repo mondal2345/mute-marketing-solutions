@@ -80,6 +80,10 @@
         .verify-box { background: #e3f2fd; padding: 12px; border-radius: 8px; border: 1px solid #90caf9; margin-bottom: 15px; }
         .btn-verify { width: 100%; padding: 10px; background: #1565c0; color: #fff; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; margin-top: 8px; }
 
+        .gst-checkbox-box { background: #f3e5f5; padding: 12px; border-radius: 8px; border: 1px solid #ce93d8; margin-bottom: 15px; }
+        .gst-checkbox-label { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: bold; color: #6a1b9a; cursor: pointer; }
+        .gst-checkbox-label input { width: 18px; height: 18px; cursor: pointer; }
+
         .payment-options-box { background: #e8f5e9; padding: 12px; border-radius: 8px; border: 1px solid #a5d6a7; margin-bottom: 15px; }
         .payment-option-item { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: bold; color: #2e7d32; cursor: default; }
 
@@ -231,6 +235,25 @@
                 <small id="geoStatus" style="display: block; margin-top: 5px; color: #555; font-size: 11px;"></small>
             </div>
 
+            <!-- Need GST Bill Option -->
+            <div class="gst-checkbox-box">
+                <label class="gst-checkbox-label">
+                    <input type="checkbox" id="needGstCheckbox" onchange="toggleGstFields()">
+                    <span>🧾 Need GST Bill (B2B Tax Invoice)?</span>
+                </label>
+            </div>
+
+            <div id="gstFieldsContainer" style="display: none;">
+                <div class="form-group">
+                    <label>Business / Company Name*</label>
+                    <input type="text" id="gstBusinessName" placeholder="Enter Registered Business Name">
+                </div>
+                <div class="form-group">
+                    <label>GSTIN Number*</label>
+                    <input type="text" id="gstNumber" placeholder="15 Digit GSTIN (e.g. 19AAAAA0000A1Z5)" style="text-transform: uppercase;">
+                </div>
+            </div>
+
             <label style="font-size: 13px; font-weight: bold; margin-bottom: 5px; display: block;">Payment Option:</label>
             <div class="payment-options-box">
                 <div class="payment-option-item">
@@ -238,7 +261,7 @@
                 </div>
             </div>
 
-            <label style="font-size: 13px; font-weight: bold;">Proforma Invoice Preview (Tax Inclusive):</label>
+            <label style="font-size: 13px; font-weight: bold;">Proforma Invoice Preview:</label>
             <div class="invoice-preview" id="invoicePreview"></div>
 
             <button class="btn-submit-order" id="submitBtn" onclick="submitOrder()">Place Order via WhatsApp</button>
@@ -266,7 +289,7 @@
     <script>
         const API_URL = "https://script.google.com/macros/s/AKfycbx-Znqse7M_3hVtbWbL9txAtEnt43EQ2aCol3s7MyAnvLYWaqPo05bDZ95znjhTWImZAg/exec"; 
         
-        const MINIMUM_ORDER_VALUE = 1500;
+        const MINIMUM_ORDER_VALUE = 10;
         let storeData = {};
         let products = [];
         let cart = {};
@@ -658,8 +681,8 @@
                             ${p.mrp > p.offer_price ? `<span class="mrp-price">Rs ${p.mrp}</span>` : ''}
                             ${p.discount ? `<span class="discount-badge">${p.discount}</span>` : ''}
                         </div>
-                        <span class="gst-text">(Incl. ${p.gst || 0}% GST | HSN: ${p.hsn || 'N/A'})</span>
-                        <span class="product-unit">${p.unit || ''}</span>
+                        <span class="gst-text">(GST Rate: ${p.gst || 0}% | HSN: ${p.hsn || 'N/A'})</span>
+                        <span class="product-unit">Unit: ${p.unit || 'Pcs'}</span>
                         ${isOutOfStock ? '<div class="out-of-stock">Out of Stock</div>' : ''}
                     </div>
                     <div>
@@ -759,6 +782,10 @@
                 document.getElementById('custAddress').value = "";
                 document.getElementById('custLandmark').value = "";
                 document.getElementById('custPincode').value = `${verifiedPincode} (${verifiedAreaName})`;
+                document.getElementById('needGstCheckbox').checked = false;
+                document.getElementById('gstFieldsContainer').style.display = 'none';
+                document.getElementById('gstBusinessName').value = "";
+                document.getElementById('gstNumber').value = "";
                 document.getElementById('geoStatus').innerText = "";
                 document.getElementById('geoBtn').innerText = "📍 Detect My Current Location";
                 document.getElementById('geoBtn').style.background = "#1976d2";
@@ -767,6 +794,12 @@
                 document.getElementById('verifyPhoneInput').value = "";
                 document.getElementById('verifyCustomerModal').style.display = 'flex';
             }
+        }
+
+        function toggleGstFields() {
+            const isChecked = document.getElementById('needGstCheckbox').checked;
+            document.getElementById('gstFieldsContainer').style.display = isChecked ? 'block' : 'none';
+            generateInvoicePreview();
         }
 
         function closeVerifyModal() {
@@ -842,45 +875,56 @@
             const phone = document.getElementById('custPhone').value.trim() || '[Phone]';
             const address = document.getElementById('custAddress').value.trim() || '[Address]';
             const landmark = document.getElementById('custLandmark').value.trim() || '[Landmark]';
+            const needGst = document.getElementById('needGstCheckbox').checked;
+            const businessName = document.getElementById('gstBusinessName').value.trim();
+            const gstNo = document.getElementById('gstNumber').value.trim().toUpperCase();
 
-            // ১. একদম শুরুতে ওয়েবসাইটের লিঙ্ক (যার ফলে WhatsApp লোগোসহ প্রিভিউ বক্স তৈরি করবে)
             let text = `https://mutemarketingsolutions.in/\n\n`;
-            
-            // ২. তারপর NEW ORDER GENERATED! এবং ইনভয়েস
             text += `*NEW ORDER GENERATED!*\n\n`;
             text += `===============================\n`;
-            text += `          PROFORMA INVOICE     \n`;
+            text += needGst ? `       TAX INVOICE (B2B)       \n` : `       PROFORMA INVOICE        \n`;
             text += `===============================\n`;
             text += `Invoice No: ${currentInvoiceNo}\nDate: ${currentOrderDate}\n`;
             if (currentCustomerId) text += `Customer ID: ${currentCustomerId}\n`;
-            text += `Customer: ${name}\nPhone: ${phone}\nAddress: ${address}\nLandmark: ${landmark}\nPincode: ${verifiedPincode} (${verifiedAreaName})\n`;
+            text += `Customer: ${name}\nPhone: ${phone}\n`;
+            if (needGst) {
+                text += `Business Name: ${businessName || '[Business Name]'}\nGSTIN: ${gstNo || '[GSTIN]'}\n`;
+            }
+            text += `Address: ${address}\nLandmark: ${landmark}\nPincode: ${verifiedPincode} (${verifiedAreaName})\n`;
 
-            text += `-------------------------------\nItem List (Incl. GST):\n`;
-            let grandTotal = 0, totalBaseAmount = 0, totalGstAmount = 0;
+            text += `-------------------------------\nItem List:\n`;
+            let totalBaseAmount = 0, totalGstAmount = 0;
 
             Object.keys(cart).forEach((id, i) => {
                 const p = products.find(prod => prod.id == id);
                 if (p) {
                     const qty = cart[id];
-                    const itemTotal = p.offer_price * qty;
-                    const gstRate = p.gst || 0;
-                    const basePrice = itemTotal / (1 + (gstRate / 100));
-                    const gstAmt = itemTotal - basePrice;
+                    const unit = p.unit || 'Pcs';
+                    const baseItemPrice = p.offer_price;
+                    const itemBaseTotal = baseItemPrice * qty;
+                    const gstRate = needGst ? (p.gst || 0) : 0;
+                    const gstAmt = itemBaseTotal * (gstRate / 100);
 
-                    grandTotal += itemTotal;
-                    totalBaseAmount += basePrice;
+                    totalBaseAmount += itemBaseTotal;
                     totalGstAmount += gstAmt;
 
-                    text += `${i + 1}. ${p.name}\n   ID: ${p.id} | HSN: ${p.hsn || 'N/A'} | Qty: ${qty}\n   Price: ${qty} x Rs ${p.offer_price} = Rs ${itemTotal.toFixed(2)}\n`;
+                    text += `${i + 1}. ${p.name}\n   ID: ${p.id} | HSN: ${p.hsn || 'N/A'}\n   Qty: ${qty} ${unit} x Rs ${baseItemPrice} = Rs ${itemBaseTotal.toFixed(2)}`;
+                    if (needGst && gstRate > 0) {
+                        text += ` (+${gstRate}% GST: Rs ${gstAmt.toFixed(2)})`;
+                    }
+                    text += `\n`;
                 }
             });
 
-            currentGrandTotal = grandTotal;
-            text += `-------------------------------\nBase Price: Rs ${totalBaseAmount.toFixed(2)}\nTotal GST: Rs ${totalGstAmount.toFixed(2)}\n===============================\nGrand Total: Rs ${grandTotal.toFixed(2)}\n`;
+            currentGrandTotal = totalBaseAmount + totalGstAmount;
+            text += `-------------------------------\nBase Amount: Rs ${totalBaseAmount.toFixed(2)}\n`;
+            if (needGst) {
+                text += `Total GST: Rs ${totalGstAmount.toFixed(2)}\n`;
+            }
+            text += `===============================\nGrand Total: Rs ${currentGrandTotal.toFixed(2)}\n`;
             text += `Payment Mode: Cash on Delivery (COD)\n`;
             text += `===============================\n`;
 
-            // ৩. জিপিএস লোকেশন লিঙ্ক যদি থাকে তবে তা মেসেজের একদম শেষে থাকবে
             if (userLocationUrl) {
                 text += `\n📍 Google Map Pin:\n${userLocationUrl}\n`;
             }
@@ -890,11 +934,19 @@
             document.getElementById('invoicePreview').innerText = text;
         }
 
+        ['custName', 'custPhone', 'custEmail', 'custAddress', 'custLandmark', 'gstBusinessName', 'gstNumber'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) el.addEventListener('input', generateInvoicePreview);
+        });
+
         function submitOrder() {
             const name = document.getElementById('custName').value.trim();
             const phone = document.getElementById('custPhone').value.trim();
             const address = document.getElementById('custAddress').value.trim();
             const landmark = document.getElementById('custLandmark').value.trim();
+            const needGst = document.getElementById('needGstCheckbox').checked;
+            const businessName = document.getElementById('gstBusinessName').value.trim();
+            const gstNo = document.getElementById('gstNumber').value.trim();
 
             if (!name || !phone || !address || !landmark) {
                 showAlert('Please fill in all required fields (*).');
@@ -903,6 +955,11 @@
 
             if (phone.length < 10) {
                 showAlert('Please enter a valid 10-digit WhatsApp number.');
+                return;
+            }
+
+            if (needGst && (!businessName || !gstNo)) {
+                showAlert('Please enter Business Name and GSTIN for GST Bill.');
                 return;
             }
 
@@ -935,6 +992,8 @@
                 userLocationUrl = "";
                 verifiedPincode = "";
                 verifiedAreaName = "";
+                document.getElementById('needGstCheckbox').checked = false;
+                document.getElementById('gstFieldsContainer').style.display = 'none';
                 updateCartBar();
                 closeCheckoutModal();
                 localStorage.removeItem('MUTE_PRODUCTS_CACHE');
@@ -948,7 +1007,14 @@
             const email = document.getElementById('custEmail').value.trim();
             const address = document.getElementById('custAddress').value.trim();
             const landmark = document.getElementById('custLandmark').value.trim();
-            let orderItems = Object.keys(cart).map(id => ({ id: id, qty: cart[id] }));
+            const needGst = document.getElementById('needGstCheckbox').checked;
+            const businessName = document.getElementById('gstBusinessName').value.trim();
+            const gstNo = document.getElementById('gstNumber').value.trim().toUpperCase();
+
+            let orderItems = Object.keys(cart).map(id => {
+                const p = products.find(prod => prod.id == id);
+                return { id: id, qty: cart[id], unit: p ? (p.unit || 'Pcs') : 'Pcs' };
+            });
 
             const payload = {
                 invoiceNo: currentInvoiceNo,
@@ -961,6 +1027,9 @@
                 customerLandmark: landmark,
                 customerPincode: `${verifiedPincode} (${verifiedAreaName})`,
                 gpsLocation: userLocationUrl ? userLocationUrl : "N/A",
+                needGst: needGst,
+                businessName: businessName,
+                gstNumber: gstNo,
                 totalValue: currentGrandTotal.toFixed(2),
                 items: orderItems,
                 paymentMode: "COD"
