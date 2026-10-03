@@ -141,6 +141,21 @@
         <button class="btn-view-cart" onclick="openCartOptionModal()">View cart</button>
     </div>
 
+    <!-- Pincode Check Modal (First Step) -->
+    <div class="modal-overlay" id="pincodeCheckModal">
+        <div class="modal-content">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
+                <strong>Check Delivery Area</strong>
+                <button onclick="closePincodeModal()" style="border:none; background:none; font-size:18px; cursor:pointer;">X</button>
+            </div>
+            <div class="verify-box">
+                <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 5px;">Enter Delivery Pincode*</label>
+                <input type="number" id="checkPincodeInput" placeholder="6 Digit Delivery Pincode" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;">
+                <button class="btn-verify" onclick="checkDeliveryPincode()">Check Availability</button>
+            </div>
+        </div>
+    </div>
+
     <div class="modal-overlay" id="customerTypeModal">
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
@@ -200,6 +215,10 @@
                 <label>Landmark*</label>
                 <input type="text" id="custLandmark" placeholder="Nearby Landmark">
             </div>
+            <div class="form-group">
+                <label>Pincode*</label>
+                <input type="text" id="custPincode" readonly style="background: #eef2f5; cursor: not-allowed; font-weight: bold; color: #1565c0;">
+            </div>
 
             <div class="form-group">
                 <label>GPS Location Pin</label>
@@ -253,6 +272,79 @@
         let currentOrderDate = "";
         let currentGrandTotal = 0;
         let currentCustomerId = "";
+
+        // Serviceable Pincodes and Area Mapping
+        const SERVICABLE_AREAS = {
+            "700001": "Kolkata GPO, BBD Bagh, Fairlie Place",
+            "700002": "Cossipore",
+            "700003": "Bagbazar",
+            "700004": "Shyambazar",
+            "700005": "Hatkhola, Sobhabazar",
+            "700006": "Beadon Street",
+            "700007": "Burrabazar",
+            "700009": "Amherst Street, Raja Rammohan Sarani",
+            "700012": "Bowbazar, Chandni Chowk",
+            "700013": "Esplanade, Wellington",
+            "700014": "Sealdah, Entally",
+            "700016": "Park Street, Free School Street",
+            "700017": "Circus Avenue, Park Circus",
+            "700019": "Ballygunge",
+            "700020": "AJC Bose Road, Elgin Road",
+            "700025": "Bhawanipore",
+            "700026": "Kalighat, Rashbehari",
+            "700027": "Alipore",
+            "700028": "Dum Dum Cantonment",
+            "700029": "Lake Gardens, Southern Avenue",
+            "700032": "Jadavpur, Jadavpur University",
+            "700034": "Behala, Behala Tram Depot",
+            "700038": "Thakurpukur, Joka",
+            "700039": "Topsia, Picnic Garden",
+            "700040": "Tollygunge, Regent Park",
+            "700045": "Lake Avenue, Southern Avenue",
+            "700047": "Naktala, Bansdroni",
+            "700048": "Patipukur, Lake Town",
+            "700049": "Sodepur",
+            "700051": "Birati",
+            "700052": "Dum Dum Airport (CCU)",
+            "700055": "Kaikhali, Airport Gate 1",
+            "700056": "Belgharia",
+            "700057": "Ariadaha, Dakshineswar",
+            "700058": "Kamarhati",
+            "700059": "Nagerbazar, Arjunpur",
+            "700060": "Behala Chowrasta, Sarsuna",
+            "700061": "Parnasree Pally",
+            "700064": "Salt Lake (Sector 1)",
+            "700068": "Dhakuria",
+            "700070": "Bansdroni, Garia Park",
+            "700084": "Garia, Mahamayatala",
+            "700091": "Salt Lake (Sector 5)",
+            "700093": "Panchasayar, Peerless Hospital",
+            "700096": "Brahmapur",
+            "700100": "Mukundapur, EM Bypass",
+            "700103": "Bonhooghly, Narendrapur",
+            "700104": "Amtala, Bishnupur",
+            "700106": "Salt Lake (Sector 2 & 3)",
+            "700108": "Baranagar",
+            "700109": "Khardah",
+            "700110": "Panihati",
+            "700120": "Barrackpore",
+            "700124": "Barasat",
+            "700125": "Madhyamgram",
+            "700136": "Rajarhat, Chinar Park",
+            "700137": "Budge Budge, Batanagar",
+            "700138": "Achhipur, Pujali",
+            "700140": "Batanagar, Akra",
+            "700141": "Maheshtala, Ashuti",
+            "700144": "Baruipur",
+            "700150": "Sonarpur",
+            "700152": "Rajpur, Harinavi",
+            "700154": "Boral",
+            "700156": "New Town (Action Area 1 & 2)",
+            "700160": "New Town (Action Area 3)"
+        };
+
+        let verifiedPincode = "";
+        let verifiedAreaName = "";
 
         function showAlert(msg) {
             document.getElementById('customAlertMsg').innerText = msg;
@@ -522,7 +614,34 @@
                 return;
             }
 
-            document.getElementById('customerTypeModal').style.display = 'flex';
+            document.getElementById('pincodeCheckModal').style.display = 'flex';
+        }
+
+        function closePincodeModal() {
+            document.getElementById('pincodeCheckModal').style.display = 'none';
+        }
+
+        function checkDeliveryPincode() {
+            const inputPin = document.getElementById('checkPincodeInput').value.trim();
+            if (!inputPin || inputPin.length !== 6) {
+                showAlert("Please enter a valid 6-digit Pincode.");
+                return;
+            }
+
+            if (SERVICABLE_AREAS[inputPin]) {
+                verifiedPincode = inputPin;
+                verifiedAreaName = SERVICABLE_AREAS[inputPin];
+                
+                closePincodeModal();
+                document.getElementById('customerTypeModal').style.display = 'flex';
+                showAlert(`Great! Delivery is available in ${verifiedAreaName} (${verifiedPincode}).`);
+            } else {
+                const pinNumbers = Object.keys(SERVICABLE_AREAS).map(Number);
+                const minPin = Math.min(...pinNumbers);
+                const maxPin = Math.max(...pinNumbers);
+                
+                showAlert(`Sorry! Delivery is not available in your pincode. We deliver between pincodes ${minPin} to ${maxPin}.`);
+            }
         }
 
         function closeCustomerTypeModal() {
@@ -540,6 +659,7 @@
                 document.getElementById('custEmail').value = "";
                 document.getElementById('custAddress').value = "";
                 document.getElementById('custLandmark').value = "";
+                document.getElementById('custPincode').value = `${verifiedPincode} (${verifiedAreaName})`;
                 document.getElementById('geoStatus').innerText = "";
                 document.getElementById('geoBtn').innerText = "📍 Detect My Current Location";
                 document.getElementById('geoBtn').style.background = "#1976d2";
@@ -582,6 +702,7 @@
                     document.getElementById('custEmail').value = c.email || "";
                     document.getElementById('custAddress').value = c.address || "";
                     document.getElementById('custLandmark').value = c.landmark || "";
+                    document.getElementById('custPincode').value = `${verifiedPincode} (${verifiedAreaName})`;
 
                     if (c.gpsLocation && c.gpsLocation !== "N/A") {
                         userLocationUrl = c.gpsLocation;
@@ -626,7 +747,7 @@
             let text = `===============================\n        PROFORMA INVOICE       \n===============================\n`;
             text += `Invoice No: ${currentInvoiceNo}\nDate: ${currentOrderDate}\n`;
             if (currentCustomerId) text += `Customer ID: ${currentCustomerId}\n`;
-            text += `Customer: ${name}\nPhone: ${phone}\nAddress: ${address}\nLandmark: ${landmark}\n`;
+            text += `Customer: ${name}\nPhone: ${phone}\nAddress: ${address}\nLandmark: ${landmark}\nPincode: ${verifiedPincode} (${verifiedAreaName})\n`;
             if (userLocationUrl) text += `Google Map Pin: ${userLocationUrl}\n`;
 
             text += `-------------------------------\nItem List (Incl. GST):\n`;
@@ -693,6 +814,8 @@
                 currentOrderDate = "";
                 currentCustomerId = "";
                 userLocationUrl = "";
+                verifiedPincode = "";
+                verifiedAreaName = "";
                 submitBtn.disabled = false;
                 updateCartBar();
                 closeCheckoutModal();
@@ -719,6 +842,7 @@
                 customerEmail: email,
                 customerAddress: fullAddress,
                 customerLandmark: landmark,
+                customerPincode: `${verifiedPincode} (${verifiedAreaName})`,
                 gpsLocation: userLocationUrl || "N/A",
                 totalValue: currentGrandTotal.toFixed(2),
                 items: orderItems,
