@@ -84,6 +84,10 @@
         .payment-option-item { display: flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; cursor: pointer; margin-bottom: 6px; }
         .payment-option-item:last-child { margin-bottom: 0; }
 
+        .upi-box { display: none; background: #fff3e0; padding: 12px; border-radius: 8px; border: 1px solid #ffe0b2; margin-bottom: 15px; text-align: center; }
+        .upi-qr-img { width: 160px; height: 160px; object-fit: contain; margin: 8px auto; display: block; border: 1px solid #ddd; border-radius: 6px; }
+        .btn-upi-app { display: inline-block; width: 100%; padding: 10px; background: #fb8c00; color: #fff; text-decoration: none; border-radius: 6px; font-weight: bold; margin: 8px 0; }
+
         .invoice-preview { background: #f9f9f9; border: 1px dashed #ccc; padding: 12px; border-radius: 8px; font-family: monospace; font-size: 11px; margin-bottom: 15px; white-space: pre-wrap; line-height: 1.4; }
         .btn-submit-order { width: 100%; padding: 12px; background: #2e7d32; color: #fff; border: none; border-radius: 8px; font-size: 15px; font-weight: bold; cursor: pointer; }
         .btn-submit-order:disabled { background: #81c784; cursor: not-allowed; }
@@ -142,16 +146,13 @@
         <button class="btn-view-cart" onclick="openCartOptionModal()">View cart</button>
     </div>
 
-    <!-- Modal 1: Select Customer Type (New / Existing) -->
     <div class="modal-overlay" id="customerTypeModal">
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
                 <strong>Select Customer Type</strong>
                 <button onclick="closeCustomerTypeModal()" style="border:none; background:none; font-size:18px; cursor:pointer;">X</button>
             </div>
-            
             <p style="font-size: 14px; margin-bottom: 15px; color: #555;">Are you a new or existing customer?</p>
-            
             <div class="customer-type-box">
                 <button class="btn-cust-type" onclick="selectCustomerFlow('NEW')">🆕 New Customer</button>
                 <button class="btn-cust-type" onclick="selectCustomerFlow('EXISTING')">👤 Existing Customer</button>
@@ -159,14 +160,12 @@
         </div>
     </div>
 
-    <!-- Modal 2: Existing Customer Phone Verification -->
     <div class="modal-overlay" id="verifyCustomerModal">
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
                 <strong>Verify Phone Number</strong>
                 <button onclick="closeVerifyModal()" style="border:none; background:none; font-size:18px; cursor:pointer;">X</button>
             </div>
-
             <div class="verify-box">
                 <label style="font-size: 13px; font-weight: bold; display: block; margin-bottom: 5px;">Enter Registered Phone Number</label>
                 <input type="tel" id="verifyPhoneInput" placeholder="10 Digit Phone Number" style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;">
@@ -175,7 +174,6 @@
         </div>
     </div>
 
-    <!-- Modal 3: Checkout & Proforma Invoice -->
     <div class="modal-overlay" id="checkoutModal">
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
@@ -196,7 +194,7 @@
                 <input type="tel" id="custPhone" placeholder="10 Digit Phone Number">
             </div>
             <div class="form-group">
-                <label>Email Address (Required for PayU)*</label>
+                <label>Email Address*</label>
                 <input type="email" id="custEmail" placeholder="yourname@gmail.com">
             </div>
             <div class="form-group">
@@ -219,13 +217,29 @@
             <label style="font-size: 13px; font-weight: bold; margin-bottom: 5px; display: block;">Select Payment Option:</label>
             <div class="payment-options-box">
                 <label class="payment-option-item">
-                    <input type="radio" name="paymentMode" value="COD" checked onchange="generateInvoicePreview()">
+                    <input type="radio" name="paymentMode" value="COD" checked onchange="togglePaymentMode()">
                     <span>💵 Cash on Delivery (COD)</span>
                 </label>
                 <label class="payment-option-item">
-                    <input type="radio" name="paymentMode" value="PAYU" onchange="generateInvoicePreview()">
-                    <span>💳 Pay Online (UPI / Card / NetBanking via PayU)</span>
+                    <input type="radio" name="paymentMode" value="DIRECT_UPI" onchange="togglePaymentMode()">
+                    <span>📲 Direct Pay via PhonePe / GPay / Paytm / QR</span>
                 </label>
+                <label class="payment-option-item">
+                    <input type="radio" name="paymentMode" value="PAYU" onchange="togglePaymentMode()">
+                    <span>💳 Pay Gateway (Cards / NetBanking via PayU)</span>
+                </label>
+            </div>
+
+            <div class="upi-box" id="upiContainer">
+                <p style="font-size:12px; color:#e65100; font-weight:bold;">Pay exact amount to Store UPI:</p>
+                <p style="font-size:14px; font-weight:bold; color:#333; margin:4px 0;" id="upiIdText">9330672659@ybl</p>
+                <a href="#" id="upiPayBtn" class="btn-upi-app">⚡ Open UPI App (GPay/PhonePe/Paytm)</a>
+                <img src="" id="upiQrImg" class="upi-qr-img" alt="UPI QR Code">
+                
+                <div class="form-group" style="text-align:left; margin-top:10px;">
+                    <label style="font-size:12px;">Enter 12-Digit UPI Transaction ID / Ref No*</label>
+                    <input type="text" id="upiTxnInput" placeholder="e.g. 428710239102">
+                </div>
             </div>
 
             <label style="font-size: 13px; font-weight: bold;">Proforma Invoice Preview (Tax Inclusive):</label>
@@ -654,11 +668,44 @@
                 currentInvoiceNo = storeData.nextInvoiceNo || "INV-0001";
                 currentOrderDate = getFormattedDate();
             }
-            generateInvoicePreview();
+            togglePaymentMode();
             document.getElementById('checkoutModal').style.display = 'flex';
         }
 
         function closeCheckoutModal() { document.getElementById('checkoutModal').style.display = 'none'; }
+
+        function togglePaymentMode() {
+            const selectedMode = document.querySelector('input[name="paymentMode"]:checked').value;
+            const upiBox = document.getElementById('upiContainer');
+            const submitBtn = document.getElementById('submitBtn');
+
+            const upiId = storeData.directUpiId || "9330672659@ybl";
+            const upiName = storeData.directUpiName || "Mute Marketing Solutions";
+            
+            if (selectedMode === "DIRECT_UPI") {
+                upiBox.style.display = "block";
+                document.getElementById('upiIdText').innerText = upiId;
+
+                const upiLink = `upi://pay?pa=${encodeURIComponent(upiId)}&pn=${encodeURIComponent(upiName)}&am=${currentGrandTotal.toFixed(2)}&cu=INR&tn=${encodeURIComponent('Order ' + currentInvoiceNo)}`;
+                document.getElementById('upiPayBtn').href = upiLink;
+
+                const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(upiLink)}`;
+                document.getElementById('upiQrImg').src = qrUrl;
+
+                submitBtn.innerText = "Submit Direct UPI Order via WhatsApp";
+                submitBtn.style.background = "#fb8c00";
+            } else {
+                upiBox.style.display = "none";
+                if (selectedMode === 'PAYU') {
+                    submitBtn.innerText = "Proceed to Pay via PayU";
+                    submitBtn.style.background = "#1976d2";
+                } else {
+                    submitBtn.innerText = "Place Order via WhatsApp";
+                    submitBtn.style.background = "#2e7d32";
+                }
+            }
+            generateInvoicePreview();
+        }
 
         function generateInvoicePreview() {
             const name = document.getElementById('custName').value.trim() || '[Name]';
@@ -666,6 +713,7 @@
             const address = document.getElementById('custAddress').value.trim() || '[Address]';
             const landmark = document.getElementById('custLandmark').value.trim() || '[Landmark]';
             const selectedMode = document.querySelector('input[name="paymentMode"]:checked').value;
+            const upiTxnId = document.getElementById('upiTxnInput').value.trim();
 
             let text = `===============================\n        PROFORMA INVOICE       \n===============================\n`;
             text += `Invoice No: ${currentInvoiceNo}\nDate: ${currentOrderDate}\n`;
@@ -695,22 +743,23 @@
 
             currentGrandTotal = grandTotal;
             text += `-------------------------------\nBase Price: Rs ${totalBaseAmount.toFixed(2)}\nTotal GST: Rs ${totalGstAmount.toFixed(2)}\n===============================\nGrand Total: Rs ${grandTotal.toFixed(2)}\n`;
-            text += `Payment Mode: ${selectedMode === 'COD' ? 'Cash on Delivery (COD)' : 'Paid Online via PayU'}\n===============================\n\n`;
+            
+            if (selectedMode === 'DIRECT_UPI') {
+                text += `Payment Mode: Direct UPI Payment\n`;
+                if (upiTxnId) text += `UPI Txn Ref ID: ${upiTxnId}\n`;
+            } else if (selectedMode === 'PAYU') {
+                text += `Payment Mode: Paid Online via PayU Gateway\n`;
+            } else {
+                text += `Payment Mode: Cash on Delivery (COD)\n`;
+            }
+
+            text += `===============================\n\n`;
             text += `Thank you! Visit again:\nhttps://mondal2345.github.io/mute-marketing-solutions/`;
 
             document.getElementById('invoicePreview').innerText = text;
-
-            const submitBtn = document.getElementById('submitBtn');
-            if (selectedMode === 'PAYU') {
-                submitBtn.innerText = "Proceed to Pay via PayU";
-                submitBtn.style.background = "#1976d2";
-            } else {
-                submitBtn.innerText = "Place Order via WhatsApp";
-                submitBtn.style.background = "#2e7d32";
-            }
         }
 
-        ['custName', 'custPhone', 'custEmail', 'custAddress', 'custLandmark'].forEach(id => {
+        ['custName', 'custPhone', 'custEmail', 'custAddress', 'custLandmark', 'upiTxnInput'].forEach(id => {
             const el = document.getElementById(id);
             if (el) el.addEventListener('input', generateInvoicePreview);
         });
@@ -722,6 +771,7 @@
             const address = document.getElementById('custAddress').value.trim();
             const landmark = document.getElementById('custLandmark').value.trim();
             const selectedMode = document.querySelector('input[name="paymentMode"]:checked').value;
+            const upiTxnId = document.getElementById('upiTxnInput').value.trim();
 
             if (!name || !phone || !address || !landmark) {
                 showAlert('Please fill in all required fields (*).');
@@ -730,6 +780,11 @@
 
             if (phone.length < 10) {
                 showAlert('Please enter a valid 10-digit WhatsApp number.');
+                return;
+            }
+
+            if (selectedMode === "DIRECT_UPI" && !upiTxnId) {
+                showAlert('Please enter the 12-digit UPI Transaction Ref ID after completing payment.');
                 return;
             }
 
@@ -793,7 +848,7 @@
                 });
 
             } else {
-                saveOrderToSheet("COD", function() {
+                saveOrderToSheet(selectedMode, function() {
                     const invoiceText = document.getElementById('invoicePreview').innerText;
                     const encoded = encodeURIComponent(`*NEW ORDER GENERATED!*\n\n${invoiceText}`);
                     window.open(`https://wa.me/${storeData.whatsapp || '919330672659'}?text=${encoded}`, '_blank');
@@ -839,6 +894,7 @@
             const email = document.getElementById('custEmail').value.trim();
             const address = document.getElementById('custAddress').value.trim();
             const landmark = document.getElementById('custLandmark').value.trim();
+            const upiTxnId = document.getElementById('upiTxnInput').value.trim();
             const fullAddress = `${address}, Landmark: ${landmark}`;
             let orderItems = Object.keys(cart).map(id => ({ id: id, qty: cart[id] }));
 
@@ -854,7 +910,8 @@
                 gpsLocation: userLocationUrl || "N/A",
                 totalValue: currentGrandTotal.toFixed(2),
                 items: orderItems,
-                paymentMode: paymentMode
+                paymentMode: paymentMode,
+                upiTxnId: upiTxnId
             };
 
             fetch(API_URL, {
