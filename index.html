@@ -983,14 +983,10 @@
         const encodedMsg = encodeURIComponent(fullMessage);
         const targetPhone = storeData.whatsapp || '919330672659';
         
-        // নেটিভ হোয়াটসঅ্যাপ অ্যাপ খোলার সরাসরি স্কিম
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        // Direct WhatsApp App Opener (Direct Deep Link)
+        const directWaUrl = `https://api.whatsapp.com/send?phone=${targetPhone}&text=${encodedMsg}`;
         
-        if (isMobile) {
-            window.location.href = `whatsapp://send?phone=${targetPhone}&text=${encodedMsg}`;
-        } else {
-            window.open(`https://web.whatsapp.com/send?phone=${targetPhone}&text=${encodedMsg}`, '_blank');
-        }
+        window.open(directWaUrl, '_blank');
 
         cart = {};
         currentInvoiceNo = "";
