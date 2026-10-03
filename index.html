@@ -13,8 +13,8 @@
 
     <meta property="og:title" content="Mute Marketing Solutions Ordering App" />
     <meta property="og:description" content="Browse products and order easily. Store: Maheshtala, Kolkata." />
-    <meta property="og:image" content="https://mondal2345.github.io/mute-marketing-solutions/logo.png" />
-    <meta property="og:url" content="https://mondal2345.github.io/mute-marketing-solutions/" />
+    <meta property="og:image" content="[https://mondal2345.github.io/mute-marketing-solutions/logo.png](https://mondal2345.github.io/mute-marketing-solutions/logo.png)" />
+    <meta property="og:url" content="[https://mondal2345.github.io/mute-marketing-solutions/](https://mondal2345.github.io/mute-marketing-solutions/)" />
 
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
@@ -112,7 +112,7 @@
         <div class="address-box" id="storeAddress">P. O - Chattakalikapur, Lal Pool, P. S - Maheshtala, Dist - 24 Parganas South, Pin - 700140.</div>
         <div class="action-buttons">
             <a id="callBtn" href="tel:+919330672659" class="btn-action btn-call">Call Store</a>
-            <a id="waBtn" href="https://wa.me/919330672659" target="_blank" class="btn-action btn-whatsapp">Send Whatsapp</a>
+            <a id="waBtn" href="[https://wa.me/919330672659](https://wa.me/919330672659)" target="_blank" class="btn-action btn-whatsapp">Send Whatsapp</a>
         </div>
     </div>
 
@@ -259,7 +259,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbzACl2swrFTEQAD4vgWW6pUQWQXpp-TPaaDiRTOc8Zi0yWQmeYuGmINoKhGJVj7ApzPkg/exec"; 
+        const API_URL = "[https://script.google.com/macros/s/AKfycbzACl2swrFTEQAD4vgWW6pUQWQXpp-TPaaDiRTOc8Zi0yWQmeYuGmINoKhGJVj7ApzPkg/exec](https://script.google.com/macros/s/AKfycbzACl2swrFTEQAD4vgWW6pUQWQXpp-TPaaDiRTOc8Zi0yWQmeYuGmINoKhGJVj7ApzPkg/exec)"; 
         
         const MINIMUM_ORDER_VALUE = 10;
         let storeData = {};
@@ -465,7 +465,7 @@
             document.getElementById('storeName').innerText = storeData.name || "mute marketing solutions";
             if (storeData.address) document.getElementById('storeAddress').innerText = storeData.address;
             if (storeData.phone) document.getElementById('callBtn').href = 'tel:+' + storeData.phone;
-            if (storeData.whatsapp) document.getElementById('waBtn').href = 'https://wa.me/' + storeData.whatsapp;
+            if (storeData.whatsapp) document.getElementById('waBtn').href = '[https://wa.me/](https://wa.me/)' + storeData.whatsapp;
 
             renderCategoriesDropdown();
             renderChips();
@@ -513,10 +513,10 @@
                 function(position) {
                     const lat = position.coords.latitude;
                     const lng = position.coords.longitude;
-                    userLocationUrl = `https://maps.google.com/?q=${lat},${lng}`;
+                    userLocationUrl = `[https://maps.google.com/?q=$](https://maps.google.com/?q=$){lat},${lng}`;
                     btn.innerText = "✅ GPS Location Saved!";
                     btn.style.background = "#2e7d32";
-                    status.innerText = `Coordinates: ${lat.toFixed(4)}, ${lng.toFixed(4)}`;
+                    status.innerText = `Coordinates: ${lat.toFixed(4)},${lng.toFixed(4)}`;
                     generateInvoicePreview();
                 },
                 function() {
@@ -594,7 +594,7 @@
                 suggestionsBox.innerHTML = matches.map(p => {
                     const safeName = (p.name || "").replace(/"/g, '&quot;').replace(/'/g, "\\'");
                     return `<div class="suggestion-item" onclick="selectSuggestion('${safeName}')">
-                        <span>🔍 ${p.name} ${p.brand ? `<small style="color:#777">(${p.brand})</small>` : ''}</span>
+                        <span>🔍 ${p.name}${p.brand ? `<small style="color:#777">(${p.brand})</small>` : ''}</span>
                         <span class="suggestion-cat">${p.category}</span>
                     </div>`;
                 }).join('');
@@ -645,17 +645,14 @@
                 return `<div class="product-card">
                     <img src="${imgSrc}" class="product-img" onclick="openZoomModal('${imgSrc}')" onerror="this.src='${defaultImg}'">
                     <div class="product-info">
-                        <div class="product-id">ID: ${p.id}</div>
-                        ${p.brand ? `<div class="product-brand">${p.brand}</div>` : ''}
+                        <div class="product-id">ID: ${p.id}</div>${p.brand ? `<div class="product-brand">${p.brand}</div>` : ''}
                         <div class="product-title">${p.name}</div>
                         <div class="price-box">
-                            <span class="offer-price">Rs ${p.offer_price}</span>
-                            ${p.mrp > p.offer_price ? `<span class="mrp-price">Rs ${p.mrp}</span>` : ''}
+                            <span class="offer-price">Rs ${p.offer_price}</span>${p.mrp > p.offer_price ? `<span class="mrp-price">Rs ${p.mrp}</span>` : ''}
                             ${p.discount ? `<span class="discount-badge">${p.discount}</span>` : ''}
                         </div>
-                        <span class="gst-text">(Incl. ${p.gst || 0}% GST | HSN: ${p.hsn || 'N/A'})</span>
-                        <span class="product-unit">${p.unit || ''}</span>
-                        ${isOutOfStock ? '<div class="out-of-stock">Out of Stock</div>' : ''}
+                        <span class="gst-text">(Incl. ${p.gst \vert{}\vert{} 0}\% GST \vert{} HSN:${p.hsn || 'N/A'})</span>
+                        <span class="product-unit">${p.unit \vert{}\vert{} ''}</span>${isOutOfStock ? '<div class="out-of-stock">Out of Stock</div>' : ''}
                     </div>
                     <div>
                         ${isOutOfStock ? '' : `
@@ -693,7 +690,7 @@
             const bar = document.getElementById('cartBar');
             if (items > 0) {
                 bar.style.display = 'flex';
-                document.getElementById('cartSummary').innerText = `${items} ITEMS - Rs ${total.toFixed(2)}`;
+                document.getElementById('cartSummary').innerText = `${items} ITEMS - Rs${total.toFixed(2)}`;
             } else bar.style.display = 'none';
         }
 
@@ -734,7 +731,7 @@
                 const minPin = Math.min(...pinNumbers);
                 const maxPin = Math.max(...pinNumbers);
                 
-                showAlert(`Sorry! Delivery is not available in your pincode. We deliver between pincodes ${minPin} to ${maxPin}.`);
+                showAlert(`Sorry! Delivery is not available in your pincode. We deliver between pincodes ${minPin} to${maxPin}.`);
             }
         }
 
@@ -839,9 +836,9 @@
             const landmark = document.getElementById('custLandmark').value.trim() || '[Landmark]';
 
             let text = `===============================\n        PROFORMA INVOICE       \n===============================\n`;
-            text += `Invoice No: ${currentInvoiceNo}\nDate: ${currentOrderDate}\n`;
+            text += `Invoice No: ${currentInvoiceNo}\nDate:${currentOrderDate}\n`;
             if (currentCustomerId) text += `Customer ID: ${currentCustomerId}\n`;
-            text += `Customer: ${name}\nPhone: ${phone}\nAddress: ${address}\nLandmark: ${landmark}\nPincode: ${verifiedPincode} (${verifiedAreaName})\n`;
+            text += `Customer: ${name}\nPhone:${phone}\nAddress: ${address}\nLandmark:${landmark}\nPincode: ${verifiedPincode} (${verifiedAreaName})\n`;
             if (userLocationUrl) text += `Google Map Pin: ${userLocationUrl}\n`;
 
             text += `-------------------------------\nItem List (Incl. GST):\n`;
@@ -860,15 +857,15 @@
                     totalBaseAmount += basePrice;
                     totalGstAmount += gstAmt;
 
-                    text += `${i + 1}. ${p.name}\n   ID: ${p.id} | HSN: ${p.hsn || 'N/A'} | Qty: ${qty}\n   Price: ${qty} x Rs ${p.offer_price} = Rs ${itemTotal.toFixed(2)}\n`;
+                    text += `${i + 1}.${p.name}\n   ID: ${p.id} \vert{} HSN:${p.hsn || 'N/A'} | Qty: ${qty}\n   Price:${qty} x Rs ${p.offer_price} = Rs${itemTotal.toFixed(2)}\n`;
                 }
             });
 
             currentGrandTotal = grandTotal;
-            text += `-------------------------------\nBase Price: Rs ${totalBaseAmount.toFixed(2)}\nTotal GST: Rs ${totalGstAmount.toFixed(2)}\n===============================\nGrand Total: Rs ${grandTotal.toFixed(2)}\n`;
+            text += `-------------------------------\nBase Price: Rs ${totalBaseAmount.toFixed(2)}\nTotal GST: Rs ${totalGstAmount.toFixed(2)}\n===============================\nGrand Total: Rs${grandTotal.toFixed(2)}\n`;
             text += `Payment Mode: Cash on Delivery (COD)\n`;
             text += `===============================\n\n`;
-            text += `Thank you! Visit again:\nhttps://mondal2345.github.io/mute-marketing-solutions/`;
+            text += `Thank you! Visit again:\n[https://mondal2345.github.io/mute-marketing-solutions/](https://mondal2345.github.io/mute-marketing-solutions/)`;
 
             document.getElementById('invoicePreview').innerText = text;
         }
@@ -900,8 +897,9 @@
 
             saveOrderToSheet("COD", function() {
                 const invoiceText = document.getElementById('invoicePreview').innerText;
-                const encoded = encodeURIComponent(`*NEW ORDER GENERATED!*\n\n${invoiceText}`);
-                window.open(`https://wa.me/${storeData.whatsapp || '919330672659'}?text=${encoded}`, '_blank');
+                const formattedWaText = `*NEW ORDER GENERATED!*\n\n\`\`\`\n${invoiceText}\n\`\`\``;
+                const encoded = encodeURIComponent(formattedWaText);
+                window.open(`[https://wa.me/$](https://wa.me/$){storeData.whatsapp || '919330672659'}?text=${encoded}`, '_blank');
 
                 cart = {};
                 currentInvoiceNo = "";
@@ -924,7 +922,6 @@
             const email = document.getElementById('custEmail').value.trim();
             const address = document.getElementById('custAddress').value.trim();
             const landmark = document.getElementById('custLandmark').value.trim();
-            const fullAddress = `${address}, Landmark: ${landmark}`;
             let orderItems = Object.keys(cart).map(id => ({ id: id, qty: cart[id] }));
 
             const payload = {
@@ -934,7 +931,7 @@
                 customerName: name,
                 customerPhone: phone,
                 customerEmail: email,
-                customerAddress: fullAddress,
+                customerAddress: address,
                 customerLandmark: landmark,
                 customerPincode: `${verifiedPincode} (${verifiedAreaName})`,
                 gpsLocation: userLocationUrl || "N/A",
