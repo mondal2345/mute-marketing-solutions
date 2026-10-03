@@ -141,7 +141,7 @@
         <button class="btn-view-cart" onclick="openCartOptionModal()">View cart</button>
     </div>
 
-    <!-- Pincode Check Modal (Step 1) -->
+    <!-- Pincode Check Modal -->
     <div class="modal-overlay" id="pincodeCheckModal">
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
@@ -156,6 +156,7 @@
         </div>
     </div>
 
+    <!-- Customer Type Modal -->
     <div class="modal-overlay" id="customerTypeModal">
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
@@ -170,6 +171,7 @@
         </div>
     </div>
 
+    <!-- Verify Phone Modal -->
     <div class="modal-overlay" id="verifyCustomerModal">
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
@@ -184,6 +186,7 @@
         </div>
     </div>
 
+    <!-- Checkout Modal -->
     <div class="modal-overlay" id="checkoutModal">
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
@@ -242,11 +245,13 @@
         </div>
     </div>
 
+    <!-- Image Zoom Modal -->
     <div class="zoom-modal" id="zoomModal" onclick="closeZoomModal()">
         <span class="zoom-close">&times;</span>
         <img id="zoomedImg" src="" alt="Zoomed Image">
     </div>
 
+    <!-- Custom Alert Overlay -->
     <div class="custom-alert-overlay" id="customAlertOverlay">
         <div class="custom-alert-box">
             <div class="custom-alert-header">
@@ -273,7 +278,7 @@
         let currentGrandTotal = 0;
         let currentCustomerId = "";
 
-        // Comprehensive 700001 to 700160 Serviceable Area Map
+        // Serviceable Area Map
         const SERVICABLE_AREAS = {
             "700001": "Kolkata GPO, BBD Bagh, Fairlie Place, Dalhousie",
             "700002": "Cossipore, Chitpur",
@@ -592,10 +597,10 @@
 
             if (matches.length > 0) {
                 suggestionsBox.innerHTML = matches.map(p => {
-                    const safeName = (p.name || "").replace(/"/g, '&quot;').replace(/'/g, "\\'");
+                    const safeName = (p.name || "").replace(/'/g, "\\'").replace(/"/g, '&quot;');
                     return `<div class="suggestion-item" onclick="selectSuggestion('${safeName}')">
                         <span>🔍 ${p.name} ${p.brand ? `<small style="color:#777">(${p.brand})</small>` : ''}</span>
-                        <span class="suggestion-cat">${p.category}</span>
+                        <span class="suggestion-cat">${p.category || 'All'}</span>
                     </div>`;
                 }).join('');
                 suggestionsBox.style.display = 'block';
@@ -842,7 +847,7 @@
             text += `Invoice No: ${currentInvoiceNo}\nDate: ${currentOrderDate}\n`;
             if (currentCustomerId) text += `Customer ID: ${currentCustomerId}\n`;
             text += `Customer: ${name}\nPhone: ${phone}\nAddress: ${address}\nLandmark: ${landmark}\nPincode: ${verifiedPincode} (${verifiedAreaName})\n`;
-            text += `Google Map Pin:\n${userLocationUrl ? userLocationUrl : ''}\n`;
+            text += `Google Map Pin:\n${userLocationUrl ? userLocationUrl : 'N/A'}\n`;
 
             text += `-------------------------------\nItem List (Incl. GST):\n`;
             let grandTotal = 0, totalBaseAmount = 0, totalGstAmount = 0;
@@ -916,6 +921,7 @@
                 verifiedPincode = "";
                 verifiedAreaName = "";
                 submitBtn.disabled = false;
+                submitBtn.innerText = "Place Order via WhatsApp";
                 updateCartBar();
                 closeCheckoutModal();
                 localStorage.removeItem('MUTE_PRODUCTS_CACHE');
@@ -938,7 +944,7 @@
                 customerName: name,
                 customerPhone: phone,
                 customerEmail: email,
-                customerAddress: address, // Landmark mukto clean address
+                customerAddress: address,
                 customerLandmark: landmark,
                 customerPincode: `${verifiedPincode} (${verifiedAreaName})`,
                 gpsLocation: userLocationUrl ? userLocationUrl : "N/A",
@@ -962,7 +968,12 @@
             });
         }
 
-        window.onload = loadData;
+        window.onload = function() {
+            loadData();
+            if ('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('sw.js').catch(err => console.log('SW registration failed: ', err));
+            }
+        };
     </script>
 </body>
 </html>
