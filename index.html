@@ -898,8 +898,13 @@
             submitBtn.disabled = true;
             submitBtn.innerText = "Processing...";
 
-            saveOrderToSheet("COD", function() {
-                const invoiceText = document.getElementById('invoicePreview').innerText;
+            saveOrderToSheet("COD", function(res) {
+                let invoiceText = document.getElementById('invoicePreview').innerText;
+                
+                if (res && res.pdfUrl && res.pdfUrl !== "N/A" && res.pdfUrl !== "PDF_GEN_ERROR") {
+                    invoiceText += `\n\n📄 Download Official PDF Invoice:\n${res.pdfUrl}`;
+                }
+
                 const encoded = encodeURIComponent(`*NEW ORDER GENERATED!*\n\n${invoiceText}`);
                 window.open(`https://wa.me/${storeData.whatsapp || '919330672659'}?text=${encoded}`, '_blank');
 
@@ -919,39 +924,43 @@
         }
 
         function saveOrderToSheet(paymentMode, callback) {
-    const name = document.getElementById('custName').value.trim();
-    const phone = document.getElementById('custPhone').value.trim();
-    const email = document.getElementById('custEmail').value.trim();
-    const address = document.getElementById('custAddress').value.trim();
-    const landmark = document.getElementById('custLandmark').value.trim();
-    let orderItems = Object.keys(cart).map(id => ({ id: id, qty: cart[id] }));
+            const name = document.getElementById('custName').value.trim();
+            const phone = document.getElementById('custPhone').value.trim();
+            const email = document.getElementById('custEmail').value.trim();
+            const address = document.getElementById('custAddress').value.trim();
+            const landmark = document.getElementById('custLandmark').value.trim();
+            let orderItems = Object.keys(cart).map(id => ({ id: id, qty: cart[id] }));
 
-    const payload = {
-        invoiceNo: currentInvoiceNo,
-        customerId: currentCustomerId,
-        orderDate: currentOrderDate,
-        customerName: name,
-        customerPhone: phone,
-        customerEmail: email,
-        customerAddress: address, // Ekhane shudhu address jabe, Landmark jod hobe na
-        customerLandmark: landmark,
-        customerPincode: `${verifiedPincode} (${verifiedAreaName})`,
-        gpsLocation: userLocationUrl ? userLocationUrl : "N/A",
-        totalValue: currentGrandTotal.toFixed(2),
-        items: orderItems,
-        paymentMode: "COD"
-    };
+            const payload = {
+                invoiceNo: currentInvoiceNo,
+                customerId: currentCustomerId,
+                orderDate: currentOrderDate,
+                customerName: name,
+                customerPhone: phone,
+                customerEmail: email,
+                customerAddress: address, // Landmark mukto clean address
+                customerLandmark: landmark,
+                customerPincode: `${verifiedPincode} (${verifiedAreaName})`,
+                gpsLocation: userLocationUrl ? userLocationUrl : "N/A",
+                totalValue: currentGrandTotal.toFixed(2),
+                items: orderItems,
+                paymentMode: "COD"
+            };
 
-    fetch(API_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
-    }).then(() => { if (callback) callback(); }).catch(err => {
-        console.error("Sheet Error:", err);
-        if (callback) callback();
-    });
-}
+            fetch(API_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'text/plain' },
+                body: JSON.stringify(payload)
+            })
+            .then(res => res.json())
+            .then(res => {
+                if (callback) callback(res);
+            })
+            .catch(err => {
+                console.error("Sheet Error:", err);
+                if (callback) callback(null);
+            });
+        }
 
         window.onload = loadData;
     </script>
