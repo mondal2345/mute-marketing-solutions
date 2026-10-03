@@ -919,39 +919,39 @@
         }
 
         function saveOrderToSheet(paymentMode, callback) {
-            const name = document.getElementById('custName').value.trim();
-            const phone = document.getElementById('custPhone').value.trim();
-            const email = document.getElementById('custEmail').value.trim();
-            const address = document.getElementById('custAddress').value.trim();
-            const landmark = document.getElementById('custLandmark').value.trim();
-            let orderItems = Object.keys(cart).map(id => ({ id: id, qty: cart[id] }));
+    const name = document.getElementById('custName').value.trim();
+    const phone = document.getElementById('custPhone').value.trim();
+    const email = document.getElementById('custEmail').value.trim();
+    const address = document.getElementById('custAddress').value.trim();
+    const landmark = document.getElementById('custLandmark').value.trim();
+    let orderItems = Object.keys(cart).map(id => ({ id: id, qty: cart[id] }));
 
-            const payload = {
-                invoiceNo: currentInvoiceNo,
-                customerId: currentCustomerId,
-                orderDate: currentOrderDate,
-                customerName: name,
-                customerPhone: phone,
-                customerEmail: email,
-                customerAddress: address,
-                customerLandmark: landmark,
-                customerPincode: `${verifiedPincode} (${verifiedAreaName})`,
-                gpsLocation: userLocationUrl ? userLocationUrl : "N/A",
-                totalValue: currentGrandTotal.toFixed(2),
-                items: orderItems,
-                paymentMode: "COD"
-            };
+    const payload = {
+        invoiceNo: currentInvoiceNo,
+        customerId: currentCustomerId,
+        orderDate: currentOrderDate,
+        customerName: name,
+        customerPhone: phone,
+        customerEmail: email,
+        customerAddress: address, // Ekhane shudhu address jabe, Landmark jod hobe na
+        customerLandmark: landmark,
+        customerPincode: `${verifiedPincode} (${verifiedAreaName})`,
+        gpsLocation: userLocationUrl ? userLocationUrl : "N/A",
+        totalValue: currentGrandTotal.toFixed(2),
+        items: orderItems,
+        paymentMode: "COD"
+    };
 
-            fetch(API_URL, {
-                method: 'POST',
-                mode: 'no-cors',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(payload)
-            }).then(() => { if (callback) callback(); }).catch(err => {
-                console.error("Sheet Error:", err);
-                if (callback) callback();
-            });
-        }
+    fetch(API_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+    }).then(() => { if (callback) callback(); }).catch(err => {
+        console.error("Sheet Error:", err);
+        if (callback) callback();
+    });
+}
 
         window.onload = loadData;
     </script>
