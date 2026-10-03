@@ -784,7 +784,6 @@
                     currentInvoiceNo = "";
                     currentOrderDate = "";
                     currentCustomerId = "";
-                    userLocationUrl = "";
                     submitBtn.disabled = false;
                     updateCartBar();
                     closeCheckoutModal();
@@ -812,6 +811,7 @@
             });
         }
 
+        // 💡 Save Order Data to Sheet
         function saveOrderToSheet(paymentMode, status, callback) {
             const name = document.getElementById('custName').value.trim();
             const phone = document.getElementById('custPhone').value.trim();
@@ -821,25 +821,28 @@
             const fullAddress = `${address}, Landmark: ${landmark}`;
             let orderItems = Object.keys(cart).map(id => ({ id: id, qty: cart[id] }));
 
+            // Exact JSON Payloads Matching Apps Script
+            const payload = {
+                invoiceNo: currentInvoiceNo,
+                customerId: currentCustomerId,
+                orderDate: currentOrderDate,
+                customerName: name,
+                customerPhone: phone,
+                customerEmail: email,
+                customerAddress: fullAddress,
+                customerLandmark: landmark,
+                gpsLocation: userLocationUrl || "N/A",
+                totalValue: currentGrandTotal.toFixed(2),
+                items: orderItems,
+                paymentMode: paymentMode,
+                status: status
+            };
+
             fetch(API_URL, {
                 method: 'POST',
                 mode: 'no-cors',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    invoiceNo: currentInvoiceNo,
-                    customerId: currentCustomerId,
-                    orderDate: currentOrderDate,
-                    customerName: name,
-                    customerPhone: phone,
-                    customerEmail: email,
-                    customerAddress: fullAddress,
-                    customerLandmark: landmark,
-                    gpsLocation: userLocationUrl,
-                    totalValue: currentGrandTotal.toFixed(2),
-                    items: orderItems,
-                    paymentMode: paymentMode,
-                    status: status
-                })
+                body: JSON.stringify(payload)
             }).then(() => { if (callback) callback(); }).catch(err => {
                 console.error("Sheet Error:", err);
                 if (callback) callback();
