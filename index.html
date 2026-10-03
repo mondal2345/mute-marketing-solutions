@@ -843,10 +843,11 @@
     const address = document.getElementById('custAddress').value.trim() || '[Address]';
     const landmark = document.getElementById('custLandmark').value.trim() || '[Landmark]';
 
-    // ১. স্টোর ব্র্যান্ডিং এবং হেডার
-    let text = `🏬 *MUTE MARKETING SOLUTIONS*\n`;
-    text += `📍 ${storeData.address || 'P. O - Chattakalikapur, Lal Pool, P. S - Maheshtala, Dist - 24 Parganas South, Pin - 700140.'}\n`;
-    text += `📞 Call/WA: +${storeData.phone || '919330672659'}\n`;
+    // ১. একদম শুরুতে ওয়েবসাইটের লিঙ্ক (যার ফলে WhatsApp লোগোসহ প্রিভিউ বক্স তৈরি করবে)
+    let text = `https://mondal2345.github.io/mute-marketing-solutions/\n\n`;
+    
+    // ২. তারপর NEW ORDER GENERATED! এবং ইনভয়েস
+    text += `*NEW ORDER GENERATED!*\n\n`;
     text += `===============================\n`;
     text += `          PROFORMA INVOICE     \n`;
     text += `===============================\n`;
@@ -878,13 +879,11 @@
     text += `-------------------------------\nBase Price: Rs ${totalBaseAmount.toFixed(2)}\nTotal GST: Rs ${totalGstAmount.toFixed(2)}\n===============================\nGrand Total: Rs ${grandTotal.toFixed(2)}\n`;
     text += `Payment Mode: Cash on Delivery (COD)\n`;
     text += `===============================\n`;
-    
-    // GPS Pin টেক্সট হিসেবে শেষে রাখা
-    if (userLocationUrl) {
-        text += `📍 GPS Pin: ${userLocationUrl}\n`;
-    }
 
-    text += `\nThank you for ordering with us!\nVisit again: https://mondal2345.github.io/mute-marketing-solutions/`;
+    // ৩. জিপিএস লোকেশন লিঙ্ক যদি থাকে তবে তা মেসেজের একদম শেষে থাকবে
+    if (userLocationUrl) {
+        text += `\n📍 Google Map Pin:\n${userLocationUrl}\n`;
+    }
 
     document.getElementById('invoicePreview').innerText = text;
 }
@@ -916,11 +915,11 @@ function submitOrder() {
         let pdfLinkText = "";
 
         if (res && res.pdfUrl && res.pdfUrl !== "N/A" && res.pdfUrl !== "PDF_GEN_ERROR") {
-            pdfLinkText = `\n\n📄 *Download Official Invoice PDF:*\n${res.pdfUrl}`;
+            pdfLinkText = `\n📄 *Download Invoice PDF:*\n${res.pdfUrl}`;
         }
 
         let invoiceText = document.getElementById('invoicePreview').innerText;
-        let fullMessage = `🚨 *NEW ORDER GENERATED!*\n\n${invoiceText}${pdfLinkText}`;
+        let fullMessage = `${invoiceText}${pdfLinkText}`;
 
         const encodedMsg = encodeURIComponent(fullMessage);
         const targetPhone = storeData.whatsapp || '919330672659';
