@@ -13,8 +13,8 @@
 
     <meta property="og:title" content="Mute Marketing Solutions Ordering App" />
     <meta property="og:description" content="Browse products and order easily. Store: Maheshtala, Kolkata." />
-    <meta property="og:image" content="https://mondal2345.github.io/mute-marketing-solutions/logo.png" />
-    <meta property="og:url" content="https://mondal2345.github.io/mute-marketing-solutions/" />
+    <meta property="og:image" content="https://mutemarketingsolutions.in/logo.png" />
+    <meta property="og:url" content="https://mutemarketingsolutions.in/" />
 
     <style>
         * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
@@ -838,107 +838,109 @@
         function closeCheckoutModal() { document.getElementById('checkoutModal').style.display = 'none'; }
 
         function generateInvoicePreview() {
-    const name = document.getElementById('custName').value.trim() || '[Name]';
-    const phone = document.getElementById('custPhone').value.trim() || '[Phone]';
-    const address = document.getElementById('custAddress').value.trim() || '[Address]';
-    const landmark = document.getElementById('custLandmark').value.trim() || '[Landmark]';
+            const name = document.getElementById('custName').value.trim() || '[Name]';
+            const phone = document.getElementById('custPhone').value.trim() || '[Phone]';
+            const address = document.getElementById('custAddress').value.trim() || '[Address]';
+            const landmark = document.getElementById('custLandmark').value.trim() || '[Landmark]';
 
-    // ১. একদম শুরুতে ওয়েবসাইটের লিঙ্ক (যার ফলে WhatsApp লোগোসহ প্রিভিউ বক্স তৈরি করবে)
-    let text = `https://mondal2345.github.io/mute-marketing-solutions/\n\n`;
-    
-    // ২. তারপর NEW ORDER GENERATED! এবং ইনভয়েস
-    text += `*NEW ORDER GENERATED!*\n\n`;
-    text += `===============================\n`;
-    text += `          PROFORMA INVOICE     \n`;
-    text += `===============================\n`;
-    text += `Invoice No: ${currentInvoiceNo}\nDate: ${currentOrderDate}\n`;
-    if (currentCustomerId) text += `Customer ID: ${currentCustomerId}\n`;
-    text += `Customer: ${name}\nPhone: ${phone}\nAddress: ${address}\nLandmark: ${landmark}\nPincode: ${verifiedPincode} (${verifiedAreaName})\n`;
+            // ১. একদম শুরুতে ওয়েবসাইটের লিঙ্ক (যার ফলে WhatsApp লোগোসহ প্রিভিউ বক্স তৈরি করবে)
+            let text = `https://mutemarketingsolutions.in/\n\n`;
+            
+            // ২. তারপর NEW ORDER GENERATED! এবং ইনভয়েস
+            text += `*NEW ORDER GENERATED!*\n\n`;
+            text += `===============================\n`;
+            text += `          PROFORMA INVOICE     \n`;
+            text += `===============================\n`;
+            text += `Invoice No: ${currentInvoiceNo}\nDate: ${currentOrderDate}\n`;
+            if (currentCustomerId) text += `Customer ID: ${currentCustomerId}\n`;
+            text += `Customer: ${name}\nPhone: ${phone}\nAddress: ${address}\nLandmark: ${landmark}\nPincode: ${verifiedPincode} (${verifiedAreaName})\n`;
 
-    text += `-------------------------------\nItem List (Incl. GST):\n`;
-    let grandTotal = 0, totalBaseAmount = 0, totalGstAmount = 0;
+            text += `-------------------------------\nItem List (Incl. GST):\n`;
+            let grandTotal = 0, totalBaseAmount = 0, totalGstAmount = 0;
 
-    Object.keys(cart).forEach((id, i) => {
-        const p = products.find(prod => prod.id == id);
-        if (p) {
-            const qty = cart[id];
-            const itemTotal = p.offer_price * qty;
-            const gstRate = p.gst || 0;
-            const basePrice = itemTotal / (1 + (gstRate / 100));
-            const gstAmt = itemTotal - basePrice;
+            Object.keys(cart).forEach((id, i) => {
+                const p = products.find(prod => prod.id == id);
+                if (p) {
+                    const qty = cart[id];
+                    const itemTotal = p.offer_price * qty;
+                    const gstRate = p.gst || 0;
+                    const basePrice = itemTotal / (1 + (gstRate / 100));
+                    const gstAmt = itemTotal - basePrice;
 
-            grandTotal += itemTotal;
-            totalBaseAmount += basePrice;
-            totalGstAmount += gstAmt;
+                    grandTotal += itemTotal;
+                    totalBaseAmount += basePrice;
+                    totalGstAmount += gstAmt;
 
-            text += `${i + 1}. ${p.name}\n   ID: ${p.id} | HSN: ${p.hsn || 'N/A'} | Qty: ${qty}\n   Price: ${qty} x Rs ${p.offer_price} = Rs ${itemTotal.toFixed(2)}\n`;
-        }
-    });
+                    text += `${i + 1}. ${p.name}\n   ID: ${p.id} | HSN: ${p.hsn || 'N/A'} | Qty: ${qty}\n   Price: ${qty} x Rs ${p.offer_price} = Rs ${itemTotal.toFixed(2)}\n`;
+                }
+            });
 
-    currentGrandTotal = grandTotal;
-    text += `-------------------------------\nBase Price: Rs ${totalBaseAmount.toFixed(2)}\nTotal GST: Rs ${totalGstAmount.toFixed(2)}\n===============================\nGrand Total: Rs ${grandTotal.toFixed(2)}\n`;
-    text += `Payment Mode: Cash on Delivery (COD)\n`;
-    text += `===============================\n`;
+            currentGrandTotal = grandTotal;
+            text += `-------------------------------\nBase Price: Rs ${totalBaseAmount.toFixed(2)}\nTotal GST: Rs ${totalGstAmount.toFixed(2)}\n===============================\nGrand Total: Rs ${grandTotal.toFixed(2)}\n`;
+            text += `Payment Mode: Cash on Delivery (COD)\n`;
+            text += `===============================\n`;
 
-    // ৩. জিপিএস লোকেশন লিঙ্ক যদি থাকে তবে তা মেসেজের একদম শেষে থাকবে
-    if (userLocationUrl) {
-        text += `\n📍 Google Map Pin:\n${userLocationUrl}\n`;
-    }
+            // ৩. জিপিএস লোকেশন লিঙ্ক যদি থাকে তবে তা মেসেজের একদম শেষে থাকবে
+            if (userLocationUrl) {
+                text += `\n📍 Google Map Pin:\n${userLocationUrl}\n`;
+            }
 
-    document.getElementById('invoicePreview').innerText = text;
-}
+            text += `\nThank you! Visit again:\nhttps://mutemarketingsolutions.in/`;
 
-function submitOrder() {
-    const name = document.getElementById('custName').value.trim();
-    const phone = document.getElementById('custPhone').value.trim();
-    const address = document.getElementById('custAddress').value.trim();
-    const landmark = document.getElementById('custLandmark').value.trim();
-
-    if (!name || !phone || !address || !landmark) {
-        showAlert('Please fill in all required fields (*).');
-        return;
-    }
-
-    if (phone.length < 10) {
-        showAlert('Please enter a valid 10-digit WhatsApp number.');
-        return;
-    }
-
-    const submitBtn = document.getElementById('submitBtn');
-    submitBtn.disabled = true;
-    submitBtn.innerText = "⏳ Processing Order & PDF Link...";
-
-    saveOrderToSheet("COD", function(res) {
-        submitBtn.innerText = "Place Order via WhatsApp";
-        submitBtn.disabled = false;
-
-        let pdfLinkText = "";
-
-        if (res && res.pdfUrl && res.pdfUrl !== "N/A" && res.pdfUrl !== "PDF_GEN_ERROR") {
-            pdfLinkText = `\n📄 *Download Invoice PDF:*\n${res.pdfUrl}`;
+            document.getElementById('invoicePreview').innerText = text;
         }
 
-        let invoiceText = document.getElementById('invoicePreview').innerText;
-        let fullMessage = `${invoiceText}${pdfLinkText}`;
+        function submitOrder() {
+            const name = document.getElementById('custName').value.trim();
+            const phone = document.getElementById('custPhone').value.trim();
+            const address = document.getElementById('custAddress').value.trim();
+            const landmark = document.getElementById('custLandmark').value.trim();
 
-        const encodedMsg = encodeURIComponent(fullMessage);
-        const targetPhone = storeData.whatsapp || '919330672659';
-        
-        window.open(`https://wa.me/${targetPhone}?text=${encodedMsg}`, '_blank');
+            if (!name || !phone || !address || !landmark) {
+                showAlert('Please fill in all required fields (*).');
+                return;
+            }
 
-        cart = {};
-        currentInvoiceNo = "";
-        currentOrderDate = "";
-        currentCustomerId = "";
-        userLocationUrl = "";
-        verifiedPincode = "";
-        verifiedAreaName = "";
-        updateCartBar();
-        closeCheckoutModal();
-        localStorage.removeItem('MUTE_PRODUCTS_CACHE');
-        loadData();
-    });
-}
+            if (phone.length < 10) {
+                showAlert('Please enter a valid 10-digit WhatsApp number.');
+                return;
+            }
+
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerText = "⏳ Processing Order & PDF Link...";
+
+            saveOrderToSheet("COD", function(res) {
+                submitBtn.innerText = "Place Order via WhatsApp";
+                submitBtn.disabled = false;
+
+                let pdfLinkText = "";
+
+                if (res && res.pdfUrl && res.pdfUrl !== "N/A" && res.pdfUrl !== "PDF_GEN_ERROR") {
+                    pdfLinkText = `\n📄 *Download Official Invoice PDF:*\n${res.pdfUrl}`;
+                }
+
+                let invoiceText = document.getElementById('invoicePreview').innerText;
+                let fullMessage = `${invoiceText}${pdfLinkText}`;
+
+                const encodedMsg = encodeURIComponent(fullMessage);
+                const targetPhone = storeData.whatsapp || '919330672659';
+                
+                window.open(`https://wa.me/${targetPhone}?text=${encodedMsg}`, '_blank');
+
+                cart = {};
+                currentInvoiceNo = "";
+                currentOrderDate = "";
+                currentCustomerId = "";
+                userLocationUrl = "";
+                verifiedPincode = "";
+                verifiedAreaName = "";
+                updateCartBar();
+                closeCheckoutModal();
+                localStorage.removeItem('MUTE_PRODUCTS_CACHE');
+                loadData();
+            });
+        }
 
         function saveOrderToSheet(paymentMode, callback) {
             const name = document.getElementById('custName').value.trim();
