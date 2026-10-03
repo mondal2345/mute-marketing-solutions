@@ -273,7 +273,7 @@
         let currentGrandTotal = 0;
         let currentCustomerId = "";
 
-        // Comprehensive 700001 to 700160 Serviceable Area Map
+        // Serviceable Pincodes Map
         const SERVICABLE_AREAS = {
             "700001": "Kolkata GPO, BBD Bagh, Fairlie Place, Dalhousie",
             "700002": "Cossipore, Chitpur",
@@ -765,7 +765,7 @@
             document.getElementById('verifyCustomerModal').style.display = 'none';
         }
 
-        // Clean Address Function to prevent duplicate "Landmark:" strings
+        // Clean Address string
         function cleanAddressText(addr) {
             if (!addr) return "";
             return addr.replace(/(,\s*Landmark:\s*.*)+/gi, "").trim();
@@ -901,11 +901,12 @@
 
             const submitBtn = document.getElementById('submitBtn');
             submitBtn.disabled = true;
-            submitBtn.innerText = "Processing & Generating PDF...";
+            submitBtn.innerText = "Generating PDF & Order Link...";
 
             saveOrderToSheet("COD", function(res) {
                 let invoiceText = document.getElementById('invoicePreview').innerText;
                 
+                // Google Drive Link Append
                 if (res && res.pdfUrl && res.pdfUrl !== "N/A" && res.pdfUrl !== "PDF_GEN_ERROR") {
                     invoiceText += `\n\n📄 Download Official PDF Invoice:\n${res.pdfUrl}`;
                 }
@@ -945,7 +946,7 @@
                 customerName: name,
                 customerPhone: phone,
                 customerEmail: email,
-                customerAddress: address, // Landmark mukto clean address
+                customerAddress: address, // Clean address without landmark duplication
                 customerLandmark: landmark,
                 customerPincode: `${verifiedPincode} (${verifiedAreaName})`,
                 gpsLocation: userLocationUrl ? userLocationUrl : "N/A",
@@ -954,7 +955,7 @@
                 paymentMode: "COD"
             };
 
-            // Read response from App Script properly
+            // Parse response from Google Apps Script properly
             fetch(API_URL, {
                 method: 'POST',
                 headers: { 'Content-Type': 'text/plain' },
