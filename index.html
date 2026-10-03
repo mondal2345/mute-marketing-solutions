@@ -811,7 +811,6 @@
             });
         }
 
-        // 💡 Save Order Data to Sheet
         function saveOrderToSheet(paymentMode, status, callback) {
             const name = document.getElementById('custName').value.trim();
             const phone = document.getElementById('custPhone').value.trim();
@@ -821,7 +820,6 @@
             const fullAddress = `${address}, Landmark: ${landmark}`;
             let orderItems = Object.keys(cart).map(id => ({ id: id, qty: cart[id] }));
 
-            // Exact JSON Payloads Matching Apps Script
             const payload = {
                 invoiceNo: currentInvoiceNo,
                 customerId: currentCustomerId,
