@@ -264,7 +264,7 @@
     </div>
 
     <script>
-        const API_URL = "https://script.google.com/macros/s/AKfycbx-Znqse7M_3hVtbWbL9txAtEnt43EQ2aCol3s7MyAnvLYWaqPo05bDZ95znjhTWImZAg/exec"; 
+        const API_URL = "https://script.google.com/macros/s/AKfycbzACl2swrFTEQAD4vgWW6pUQWQXpp-TPaaDiRTOc8Zi0yWQmeYuGmINoKhGJVj7ApzPkg/exec"; 
         
         const MINIMUM_ORDER_VALUE = 10;
         let storeData = {};
@@ -884,51 +884,50 @@
         });
 
         function submitOrder() {
-    const name = document.getElementById('custName').value.trim();
-    const phone = document.getElementById('custPhone').value.trim();
-    const address = document.getElementById('custAddress').value.trim();
-    const landmark = document.getElementById('custLandmark').value.trim();
+            const name = document.getElementById('custName').value.trim();
+            const phone = document.getElementById('custPhone').value.trim();
+            const address = document.getElementById('custAddress').value.trim();
+            const landmark = document.getElementById('custLandmark').value.trim();
 
-    if (!name || !phone || !address || !landmark) {
-        showAlert('Please fill in all required fields (*).');
-        return;
-    }
+            if (!name || !phone || !address || !landmark) {
+                showAlert('Please fill in all required fields (*).');
+                return;
+            }
 
-    if (phone.length < 10) {
-        showAlert('Please enter a valid 10-digit WhatsApp number.');
-        return;
-    }
+            if (phone.length < 10) {
+                showAlert('Please enter a valid 10-digit WhatsApp number.');
+                return;
+            }
 
-    const submitBtn = document.getElementById('submitBtn');
-    submitBtn.disabled = true;
-    submitBtn.innerText = "⏳ Generating Invoice PDF...";
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.disabled = true;
+            submitBtn.innerText = "Processing...";
 
-    saveOrderToSheet("COD", function(res) {
-        let invoiceText = document.getElementById('invoicePreview').innerText;
-        
-        // অ্যাপস স্ক্রিপ্ট থেকে ড্রাইভ লিঙ্ক সফলভাবে এলে তা হোয়াটসঅ্যাপ মেসেজে যোগ হবে
-        if (res && res.pdfUrl && res.pdfUrl !== "N/A" && res.pdfUrl !== "PDF_GEN_ERROR") {
-            invoiceText += `\n\n📄 Download Official PDF Invoice:\n${res.pdfUrl}`;
+            saveOrderToSheet("COD", function(res) {
+                let invoiceText = document.getElementById('invoicePreview').innerText;
+                
+                if (res && res.pdfUrl && res.pdfUrl !== "N/A" && res.pdfUrl !== "PDF_GEN_ERROR") {
+                    invoiceText += `\n\n📄 Download Official PDF Invoice:\n${res.pdfUrl}`;
+                }
+
+                const encoded = encodeURIComponent(`*NEW ORDER GENERATED!*\n\n${invoiceText}`);
+                window.open(`https://wa.me/${storeData.whatsapp || '919330672659'}?text=${encoded}`, '_blank');
+
+                cart = {};
+                currentInvoiceNo = "";
+                currentOrderDate = "";
+                currentCustomerId = "";
+                userLocationUrl = "";
+                verifiedPincode = "";
+                verifiedAreaName = "";
+                submitBtn.disabled = false;
+                submitBtn.innerText = "Place Order via WhatsApp";
+                updateCartBar();
+                closeCheckoutModal();
+                localStorage.removeItem('MUTE_PRODUCTS_CACHE');
+                loadData();
+            });
         }
-
-        const encoded = encodeURIComponent(`*NEW ORDER GENERATED!*\n\n${invoiceText}`);
-        window.open(`https://wa.me/${storeData.whatsapp || '919330672659'}?text=${encoded}`, '_blank');
-
-        cart = {};
-        currentInvoiceNo = "";
-        currentOrderDate = "";
-        currentCustomerId = "";
-        userLocationUrl = "";
-        verifiedPincode = "";
-        verifiedAreaName = "";
-        submitBtn.disabled = false;
-        submitBtn.innerText = "Place Order via WhatsApp";
-        updateCartBar();
-        closeCheckoutModal();
-        localStorage.removeItem('MUTE_PRODUCTS_CACHE');
-        loadData();
-    });
-}
 
         function saveOrderToSheet(paymentMode, callback) {
             const name = document.getElementById('custName').value.trim();
