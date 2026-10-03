@@ -142,7 +142,7 @@
         <button class="btn-view-cart" onclick="openCartOptionModal()">View cart</button>
     </div>
 
-    <!-- 💡 Modal 1: Select Customer Type (New / Existing) -->
+    <!-- Modal 1: Select Customer Type (New / Existing) -->
     <div class="modal-overlay" id="customerTypeModal">
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
@@ -159,7 +159,7 @@
         </div>
     </div>
 
-    <!-- 💡 Modal 2: Existing Customer Phone Verification -->
+    <!-- Modal 2: Existing Customer Phone Verification -->
     <div class="modal-overlay" id="verifyCustomerModal">
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
@@ -175,7 +175,7 @@
         </div>
     </div>
 
-    <!-- 💡 Modal 3: Checkout & Proforma Invoice -->
+    <!-- Modal 3: Checkout & Proforma Invoice -->
     <div class="modal-overlay" id="checkoutModal">
         <div class="modal-content">
             <div style="display: flex; justify-content: space-between; margin-bottom: 15px;">
@@ -536,7 +536,6 @@
             } else bar.style.display = 'none';
         }
 
-        // 💡 1. View Cart Click Handler
         function openCartOptionModal() {
             let total = Object.keys(cart).reduce((sum, id) => {
                 const p = products.find(prod => prod.id == id);
@@ -555,17 +554,20 @@
             document.getElementById('customerTypeModal').style.display = 'none';
         }
 
-        // 💡 2. Select New or Existing Customer
         function selectCustomerFlow(type) {
             closeCustomerTypeModal();
             if (type === 'NEW') {
                 currentCustomerId = "";
+                userLocationUrl = "";
                 document.getElementById('custCodeContainer').style.display = 'none';
                 document.getElementById('custName').value = "";
                 document.getElementById('custPhone').value = "";
                 document.getElementById('custEmail').value = "";
                 document.getElementById('custAddress').value = "";
                 document.getElementById('custLandmark').value = "";
+                document.getElementById('geoStatus').innerText = "";
+                document.getElementById('geoBtn').innerText = "📍 Detect My Current Location";
+                document.getElementById('geoBtn').style.background = "#1976d2";
                 openCheckoutModal();
             } else {
                 document.getElementById('verifyPhoneInput').value = "";
@@ -577,7 +579,6 @@
             document.getElementById('verifyCustomerModal').style.display = 'none';
         }
 
-        // 💡 3. Verify Existing Customer Phone
         function verifyExistingCustomer() {
             const phoneInput = document.getElementById('verifyPhoneInput').value.trim();
             if (!phoneInput || phoneInput.length < 10) {
@@ -606,6 +607,13 @@
                     document.getElementById('custEmail').value = c.email || "";
                     document.getElementById('custAddress').value = c.address || "";
                     document.getElementById('custLandmark').value = c.landmark || "";
+
+                    if (c.gpsLocation && c.gpsLocation !== "N/A") {
+                        userLocationUrl = c.gpsLocation;
+                        document.getElementById('geoBtn').innerText = "✅ Saved GPS Location Loaded!";
+                        document.getElementById('geoBtn').style.background = "#2e7d32";
+                        document.getElementById('geoStatus').innerText = `Location: ${userLocationUrl}`;
+                    }
 
                     closeVerifyModal();
                     openCheckoutModal();
@@ -776,6 +784,7 @@
                     currentInvoiceNo = "";
                     currentOrderDate = "";
                     currentCustomerId = "";
+                    userLocationUrl = "";
                     submitBtn.disabled = false;
                     updateCartBar();
                     closeCheckoutModal();
